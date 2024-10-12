@@ -12,7 +12,7 @@ Model : {
     width : F32,
     height : F32,
     center : Vector2,
-    frames : I64,
+    frameCount : I64,
     spawnTimer : I64,
     spawnedPolygons : List SpawnedPolygon,
 }
@@ -40,7 +40,7 @@ init =
         width: initialWidth,
         height: initialHeight,
         center,
-        frames: 0,
+        frameCount: 0,
         spawnTimer: 0,
         spawnedPolygons: [],
     }
@@ -53,31 +53,41 @@ render = \model ->
     frameCount : I64
     frameCount = Raylib.getFrameCount!
 
-    deltaFrames = frameCount - model.frames
-    (spawnTimer, spawnPenta) =
+    # In practice, this is 0 once and then 1 forever,
+    # but it's a stand-in for deltaTime
+    deltaFrames = frameCount - model.frameCount
+
+    (spawnTimer, spawn) =
         tickedTimer = model.spawnTimer + deltaFrames
         if tickedTimer > spawnRate then
-            (tickedTimer % spawnRate, Bool.true)
+            (tickedTimer % spawnRate, SpawnPentagon)
         else
-            (tickedTimer, Bool.false)
+            (tickedTimer, None)
 
     spawnedPolygons : List SpawnedPolygon
     spawnedPolygons =
+        updateAndDespawn : List SpawnedPolygon -> List SpawnedPolygon
+        updateAndDespawn = \polygons ->
+            polygons |> List.keepOks (\poly -> updatePolygon poly deltaFrames)
+
+        handleSpawn : List SpawnedPolygon -> List SpawnedPolygon
+        handleSpawn = \polygons ->
+            when spawn is
+                SpawnPentagon ->
+                    polygon = newPentagon model.center
+                    List.append polygons { polygon, age: 0 }
+
+                None -> polygons
+
         model.spawnedPolygons
-        |> (\polys ->
-            if spawnPenta then
-                polygon = newPentagon model.center
-                List.append polys { polygon, age: 0 }
-            else
-                polys
-        )
-        |> List.keepOks (\poly -> updatePolygon poly deltaFrames)
+        |> handleSpawn
+        |> updateAndDespawn
 
     Task.forEach! spawnedPolygons (\sp -> Polygon.draw sp.polygon)
 
     Task.ok
         { model &
-            frames: frameCount,
+            frameCount,
             spawnTimer,
             spawnedPolygons,
         }
@@ -102,23 +112,22 @@ updatePolygon = \{ polygon, age }, deltaFrames ->
 
     rotation = Num.toF32 newAge
 
-    granularity : I64
-    granularity = 600
+    radius =
+        granularity = 600
+        num =
+            newAge
+            |> Num.rem granularity
+            |> \n -> (Num.toF32 granularity - Num.toF32 n)
+            |> \n -> n * initialRadius
+        denom = Num.toF32 granularity
+        num / denom
 
-    radiusStep : F32
-    radiusStep =
-        newAge
-        |> Num.rem granularity
-        |> \n -> (Num.toF32 granularity - Num.toF32 n)
+    newPolygon = { polygon & rotation, radius }
 
-    radius = initialRadius * (Num.toF32 radiusStep / (Num.toF32 granularity))
+    # setting this too small results in no despawns
+    despawnRadius = 1
 
-    newPolygon = { polygon &
-        rotation: rotation,
-        radius: radius,
-    }
-
-    if newPolygon.radius < 0.01 then
+    if newPolygon.radius < despawnRadius then
         Err Despawn
     else
         Ok { polygon: newPolygon, age: newAge }
