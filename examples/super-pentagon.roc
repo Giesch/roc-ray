@@ -48,8 +48,7 @@ init =
     }
 
 # spawn a new polygon every n frames
-# spawnRate = 30
-spawnRate = 30 * 100_000_000
+spawnRate = 300
 
 render : Model -> Task Model {}
 render = \model ->
