@@ -28,8 +28,19 @@ setup:
 clean:
     git clean -dfx -e windows\bin
 
-
 # clean build artifacts
 [linux]
 clean:
     git clean -dfx
+
+[linux]
+format:
+    roc format
+
+[windows]
+format:
+    $env:path = "$(pwd)\windows\bin;$($env:path)"; roc format
+
+[linux]
+check app:
+    roc check {{app}}
