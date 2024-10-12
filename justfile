@@ -6,8 +6,9 @@ list:
 
 # build and run the executable
 [windows]
-dev:
-    $env:path = "$(pwd)\windows\bin;$($env:path)"; zig.exe build --release=fast -Dapp="examples/basic-shapes.roc"; .\zig-out\bin\rocray.exe
+dev app:
+    $env:path = "$(pwd)\windows\bin;$($env:path)"; zig.exe build --release=fast -Dapp="{{app}}"
+    .\zig-out\bin\rocray.exe
 
 # install zig with winget and download roc binary to ./bin/
 [windows]
