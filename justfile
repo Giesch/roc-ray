@@ -7,13 +7,15 @@ list:
 # build and run the executable
 [windows]
 dev:
-    $env:path = "$(pwd)\bin;$($env:path)"; zig.exe build --release=fast -Dapp="examples/basic-shapes.roc"; .\zig-out\bin\rocray.exe
-
-# clean the build directory
-clean:
-    git clean -dfx -e windows/bin
+    $env:path = "$(pwd)\windows\bin;$($env:path)"; zig.exe build --release=fast -Dapp="examples/basic-shapes.roc"; .\zig-out\bin\rocray.exe
 
 # install zig with winget and download roc binary to ./bin/
 [windows]
 setup:
     ./windows/setup.ps1
+
+# clean the build directory
+[windows]
+clean:
+    git clean -dfx -e windows\bin
+
