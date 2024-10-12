@@ -8,9 +8,6 @@ $url = "https://github.com/lukewilliamboswell/roc/releases/download/windows-2024
 $binDir = "$PSScriptRoot\bin\" 
 $path = "$binDir\roc.exe"
 
-echo $url
-echo $path
-
 # download roc to /windows/bin
 if (!(Test-Path $path)) {
   New-Item -ItemType Directory -Force -Path $binDir
