@@ -26,4 +26,4 @@ raylib/
 
 test-platform.roc
 
-bin/windows/
+windows/bin/
