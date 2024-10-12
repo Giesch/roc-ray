@@ -15,6 +15,8 @@ Model : {
     frameCount : I64,
     spawnTimer : I64,
     spawnedPolygons : List SpawnedPolygon,
+    playerRotation : F32,
+    playerRadius : F32,
 }
 
 fps : I32
@@ -22,8 +24,6 @@ fps = 60
 
 initialWidth = 800f32
 initialHeight = 600f32
-
-initialRadius = initialHeight * 0.9
 
 init : Task Model {}
 init =
@@ -43,10 +43,13 @@ init =
         frameCount: 0,
         spawnTimer: 0,
         spawnedPolygons: [],
+        playerRotation: -90.0,
+        playerRadius: 80.0,
     }
 
 # spawn a new polygon every n frames
-spawnRate = 30
+# spawnRate = 30
+spawnRate = 30 * 100_000_000
 
 render : Model -> Task Model {}
 render = \model ->
@@ -66,11 +69,6 @@ render = \model ->
 
     spawnedPolygons : List SpawnedPolygon
     spawnedPolygons =
-        updateAndDespawn : List SpawnedPolygon -> List SpawnedPolygon
-        updateAndDespawn = \polygons ->
-            polygons |> List.keepOks (\poly -> updatePolygon poly deltaFrames)
-
-        handleSpawn : List SpawnedPolygon -> List SpawnedPolygon
         handleSpawn = \polygons ->
             when spawn is
                 SpawnPentagon ->
@@ -79,18 +77,44 @@ render = \model ->
 
                 None -> polygons
 
+        updateAndDespawn = \polygons ->
+            polygons |> List.keepOks (\poly -> updatePolygon poly deltaFrames)
+
         model.spawnedPolygons
         |> handleSpawn
         |> updateAndDespawn
 
-    Task.forEach! spawnedPolygons (\sp -> Polygon.draw sp.polygon)
+    mouse = Raylib.getMousePosition!
+    intentOffset = 50.0
+    intent =
+        if mouse.x > (model.center.x + intentOffset) then
+            1
+        else if mouse.x < (model.center.x - intentOffset) then
+            -1
+        else
+            0
+    playerSpeed = 2
+    playerRadius = model.playerRadius
+    playerRotation = model.playerRotation + (intent * playerSpeed)
 
-    Task.ok
-        { model &
-            frameCount,
-            spawnTimer,
-            spawnedPolygons,
-        }
+    newModel : Model
+    newModel = { model &
+        frameCount,
+        spawnTimer,
+        spawnedPolygons,
+        playerRotation,
+        playerRadius,
+    }
+
+    draw! newModel
+    Task.ok newModel
+
+draw : Model -> Task {} {}
+draw = \model ->
+    Task.forEach! model.spawnedPolygons (\sp -> Polygon.draw sp.polygon)
+    drawPlayer! model
+
+initialRadius = initialHeight * 0.9
 
 newPentagon : Vector2 -> Polygon
 newPentagon = \center -> {
@@ -131,3 +155,19 @@ updatePolygon = \{ polygon, age }, deltaFrames ->
         Err Despawn
     else
         Ok { polygon: newPolygon, age: newAge }
+
+drawPlayer : Model -> Task {} {}
+drawPlayer = \{ playerRotation, playerRadius, center } ->
+    playerRadians = Polygon.degreesToRadians playerRotation
+    playerCenter = {
+        x: center.x + (Num.cos playerRadians) * playerRadius,
+        y: center.y + (Num.sin playerRadians) * playerRadius,
+    }
+
+    Polygon.draw! {
+        sides: Sides.threePlus 0,
+        color: Fuchsia,
+        rotation: playerRotation,
+        radius: 10.0,
+        center: playerCenter,
+    }

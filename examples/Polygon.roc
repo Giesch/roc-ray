@@ -1,4 +1,4 @@
-module [draw, Polygon]
+module [draw, Polygon, degreesToRadians, radiansToDegrees]
 
 import ray.Raylib exposing [Vector2]
 import Polygon.Sides as Sides exposing [Sides]
@@ -18,9 +18,10 @@ draw = \{ sides, rotation, color, radius, center } ->
         y = radius * Num.sin radians
         addPoints center { x, y }
 
+    turn = 360 / (sides |> Sides.count |> Num.toFrac)
     corners =
         List.range { start: At 0, end: Length (Sides.count sides) }
-        |> List.map \step -> atAngle ((step * 72.0 + rotation) |> degreesToRadians)
+        |> List.map \step -> atAngle ((step * turn + rotation) |> degreesToRadians)
 
     lastSide =
         when (List.last corners, List.first corners) is
@@ -45,3 +46,7 @@ slidingPairs = \list ->
 degreesToRadians : F32 -> F32
 degreesToRadians = \deg ->
     deg * Num.pi / 180.0
+
+radiansToDegrees : F32 -> F32
+radiansToDegrees = \rad ->
+    rad * 180.0 / Num.pi
