@@ -1,9 +1,10 @@
 module [draw, Polygon]
 
 import ray.Raylib exposing [Vector2]
+import Polygon.Sides as Sides exposing [Sides]
 
 Polygon : {
-    sides : U64,
+    sides : Sides,
     rotation : F32,
     color : Raylib.Color,
     radius : F32,
@@ -18,7 +19,7 @@ draw = \{ sides, rotation, color, radius, center } ->
         addPoints center { x, y }
 
     corners =
-        List.range { start: At 0, end: Length sides }
+        List.range { start: At 0, end: Length (Sides.count sides) }
         |> List.map \step -> atAngle ((step * 72.0 + rotation) |> degreesToRadians)
 
     lastSide =

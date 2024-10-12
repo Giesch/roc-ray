@@ -2,6 +2,7 @@ app [main, Model] {
     ray: platform "../platform/main.roc",
 }
 
+import Polygon.Sides as Sides
 import Polygon exposing [Polygon]
 import ray.Raylib exposing [Vector2]
 
@@ -54,24 +55,19 @@ render = \model ->
 
     deltaFrames = frameCount - model.frames
     (spawnTimer, spawnPenta) =
-        if (model.spawnTimer + deltaFrames) > spawnRate then
-            ((model.spawnTimer + deltaFrames) % spawnRate, Bool.true)
+        tickedTimer = model.spawnTimer + deltaFrames
+        if tickedTimer > spawnRate then
+            (tickedTimer % spawnRate, Bool.true)
         else
-            (model.spawnTimer + deltaFrames, Bool.false)
+            (tickedTimer, Bool.false)
 
     spawnedPolygons : List SpawnedPolygon
     spawnedPolygons =
         model.spawnedPolygons
         |> (\polys ->
             if spawnPenta then
-                poly = {
-                    sides: 5,
-                    rotation: 0.0,
-                    color: Silver,
-                    radius: initialRadius,
-                    center: model.center,
-                }
-                List.append polys { polygon: poly, age: 0 }
+                polygon = newPentagon model.center
+                List.append polys { polygon, age: 0 }
             else
                 polys
         )
@@ -85,6 +81,15 @@ render = \model ->
             spawnTimer,
             spawnedPolygons,
         }
+
+newPentagon : Vector2 -> Polygon
+newPentagon = \center -> {
+    sides: Sides.threePlus 2,
+    rotation: 0.0,
+    color: Silver,
+    radius: initialRadius,
+    center,
+}
 
 SpawnedPolygon : {
     polygon : Polygon,
