@@ -18,7 +18,7 @@ dev app:
     $env:path = "$(pwd)\windows\bin;$($env:path)"; zig.exe build --release=fast -Dapp="{{app}}"
     .\zig-out\bin\rocray.exe
 
-# install zig with winget and download roc binary to ./bin/
+# install zig with winget and download roc binary to ./windows/bin/
 [windows]
 setup:
     ./windows/setup.ps1
