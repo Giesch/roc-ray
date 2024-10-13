@@ -42,19 +42,12 @@ Model : {
     playerRotation : F32,
     playerRadius : F32,
     beat : F32,
+    bpm : F32,
 }
 
 # frames per second
 fps : I32
 fps = 60
-
-# beats per minute
-bpm : F32
-bpm = 120
-
-# beats per second
-bps : F32
-bps = bpm / 60
 
 initialWidth = 800f32
 initialHeight = 600f32
@@ -80,6 +73,7 @@ init =
         playerRotation: -90.0,
         playerRadius: initialPlayerRadius,
         beat: 0.0,
+        bpm: 120,
     }
 
 initialPlayerRadius = 80.0
@@ -109,6 +103,7 @@ update = \{ model, frameCount, mouse } ->
     beat =
         seconds = Num.toF32 frameCount / Num.toF32 fps
         secondsRadians = seconds * Num.tau + (Num.pi / 2.0)
+        bps = model.bpm / 60
         wave = Num.sin (secondsRadians * bps)
         if wave < -2 / 3 then -1.0 else wave
 
@@ -130,7 +125,8 @@ update = \{ model, frameCount, mouse } ->
                 None -> polygons
 
         updateAndDespawn = \polygons ->
-            polygons |> List.keepOks (\poly -> updatePolygon poly deltaFrames)
+            List.keepOks polygons \poly ->
+                updatePolygon poly { deltaFrames, bpm: model.bpm }
 
         addBeatToPolygon = \polygon -> { polygon & radius: polygon.radius + beat * 10.0 }
         addBeatToSpawnedPolygons = \polygons ->
@@ -157,6 +153,7 @@ update = \{ model, frameCount, mouse } ->
         width: model.width,
         height: model.height,
         center: model.center,
+        bpm: model.bpm,
         frameCount,
         spawnTimer,
         spawnedPolygons,
@@ -219,13 +216,13 @@ nonGapLines = \sp ->
         else
             List.append filtered line
 
-updatePolygon : SpawnedPolygon, I64 -> Result SpawnedPolygon [Despawn]
-updatePolygon = \spawnedPolygon, deltaFrames ->
+updatePolygon : SpawnedPolygon, { bpm : F32, deltaFrames : I64 } -> Result SpawnedPolygon [Despawn]
+updatePolygon = \spawnedPolygon, { bpm, deltaFrames } ->
     polygon = spawnedPolygon.polygon
     age = spawnedPolygon.age
     newAge = age + deltaFrames
 
-    rotation = Num.toF32 newAge
+    rotation = (bpm / 120) * Num.toF32 newAge
 
     radius =
         granularity = 600
