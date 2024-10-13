@@ -17,6 +17,7 @@ Model : {
     spawnedPolygons : List SpawnedPolygon,
     playerRotation : F32,
     playerRadius : F32,
+    beat : F32,
 }
 
 fps : I32
@@ -44,20 +45,38 @@ init =
         spawnTimer: 0,
         spawnedPolygons: [],
         playerRotation: -90.0,
-        playerRadius: 80.0,
+        playerRadius: initialPlayerRadius,
+        beat: 0.0,
     }
+
+initialPlayerRadius = 80.0
 
 # spawn a new polygon every n frames
 spawnRate = 300
 
 render : Model -> Task Model {}
 render = \model ->
-    frameCount : I64
     frameCount = Raylib.getFrameCount!
+    mouse = Raylib.getMousePosition!
 
-    # In practice, this is 0 once and then 1 forever,
-    # but it's a stand-in for deltaTime
+    newModel = update { model, frameCount, mouse }
+
+    draw! newModel
+
+    Task.ok newModel
+
+update : { model : Model, frameCount : I64, mouse : Vector2 } -> Model
+update = \{ model, frameCount, mouse } ->
+    # In practice, this is 0 once and then 1 forever;
+    # it's supposed to be a stand-in for deltaTime
     deltaFrames = frameCount - model.frameCount
+
+    # a sine wave adjustment added to objects' size
+    # ranges from 1.0 to -1.0
+    beat =
+        speed = 12.0
+        seconds = Num.toF32 frameCount / Num.toF32 fps
+        Num.sin (seconds * speed)
 
     (spawnTimer, spawn) =
         tickedTimer = model.spawnTimer + deltaFrames
@@ -79,34 +98,37 @@ render = \model ->
         updateAndDespawn = \polygons ->
             polygons |> List.keepOks (\poly -> updatePolygon poly deltaFrames)
 
+        addBeatToPolygon = \polygon ->
+            { polygon & radius: polygon.radius + beat * 10.0 }
+        addBeatToSpawnedPolygons = \polygons ->
+            polygons |> List.map (\sp -> { sp & polygon: addBeatToPolygon sp.polygon })
+
         model.spawnedPolygons
         |> handleSpawn
         |> updateAndDespawn
+        |> addBeatToSpawnedPolygons
 
-    mouse = Raylib.getMousePosition!
     intentOffset = 50.0
     intent =
-        if mouse.x > (model.center.x + intentOffset) then
-            1
-        else if mouse.x < (model.center.x - intentOffset) then
-            -1
-        else
-            0
+        holdingLeft = mouse.x > (model.center.x + intentOffset)
+        holdingRight = mouse.x < (model.center.x - intentOffset)
+        if holdingLeft then 1 else (if holdingRight then -1 else 0)
+
     playerSpeed = 2
-    playerRadius = model.playerRadius
+    playerRadius = initialPlayerRadius
     playerRotation = model.playerRotation + (intent * playerSpeed)
 
-    newModel : Model
-    newModel = { model &
+    {
+        width: model.width,
+        height: model.height,
+        center: model.center,
         frameCount,
         spawnTimer,
         spawnedPolygons,
         playerRotation,
         playerRadius,
+        beat,
     }
-
-    draw! newModel
-    Task.ok newModel
 
 draw : Model -> Task {} {}
 draw = \model ->
@@ -156,17 +178,27 @@ updatePolygon = \{ polygon, age }, deltaFrames ->
         Ok { polygon: newPolygon, age: newAge }
 
 drawPlayer : Model -> Task {} {}
-drawPlayer = \{ playerRotation, playerRadius, center } ->
+drawPlayer = \{ playerRotation, playerRadius, center, beat } ->
+    { sizeModifier, positionMultiplier } =
+        reverseBeat = -beat
+        if reverseBeat > 0 then
+            sizeMod = (reverseBeat + 1.0) * 0.5
+            { sizeModifier: sizeMod, positionMultiplier: sizeMod * 0.05 + 1.0 }
+        else
+            { sizeModifier: 0.0, positionMultiplier: 1.0 }
+
     playerRadians = Polygon.degreesToRadians playerRotation
     playerCenter = {
-        x: center.x + (Num.cos playerRadians) * playerRadius,
-        y: center.y + (Num.sin playerRadians) * playerRadius,
+        x: center.x + (Num.cos playerRadians) * playerRadius * positionMultiplier,
+        y: center.y + (Num.sin playerRadians) * playerRadius * positionMultiplier,
     }
+
+    radius = 10.0 + sizeModifier
 
     Polygon.draw! {
         sides: Sides.threePlus 0,
         color: Fuchsia,
         rotation: playerRotation,
-        radius: 10.0,
         center: playerCenter,
+        radius,
     }
