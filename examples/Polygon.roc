@@ -1,6 +1,6 @@
 module [draw, Polygon, degreesToRadians, radiansToDegrees, edges, verticies]
 
-import ray.Raylib exposing [Vector2]
+import raylib.Raylib exposing [Vector2]
 import Polygon.Sides as Sides exposing [Sides]
 
 Polygon : {
@@ -14,7 +14,7 @@ Polygon : {
 draw : Polygon -> Task {} {}
 draw = \polygon ->
     Task.forEach (edges polygon) \(start, end) ->
-        Raylib.drawLine! { start: start, end: end, color: polygon.color }
+        Raylib.drawLine! { start, end, color: polygon.color }
 
 edges : Polygon -> List (Vector2, Vector2)
 edges = \polygon ->
@@ -36,7 +36,7 @@ verticies = \{ sides, rotation, radius, center } ->
         y = radius * Num.sin radians
         addPoints center { x, y }
 
-    turnRadians = 2 * Num.pi / (sides |> Sides.count |> Num.toFrac)
+    turnRadians = Num.tau / (sides |> Sides.count |> Num.toFrac)
 
     List.range { start: At 0, end: Length (Sides.count sides) }
     |> List.map \step -> atAngle (step * turnRadians + rotationRadians)

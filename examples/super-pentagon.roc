@@ -1,10 +1,34 @@
 app [main, Model] {
-    ray: platform "../platform/main.roc",
+    raylib: platform "../platform/main.roc",
 }
 
 import Polygon.Sides as Sides
 import Polygon exposing [Polygon]
-import ray.Raylib exposing [Vector2]
+import raylib.Raylib exposing [Vector2]
+
+# TODO
+# - update
+#   - merge upstream
+#   - use platform state
+#   - use keys?
+# - obstacles
+#   - make paths in pentagons
+#   - vary the shapes
+#     - n sides
+#     - n missing sides
+#     - missing corners?
+# - score
+#   - display
+#   - increase on the beat
+# - collision/death
+#   - move player beat into update
+#   - detect collision
+#   - freeze
+#   - text
+#   - restart button
+#   - high score
+# - misc
+#   - use radians everywhere
 
 main = { init, render }
 
@@ -20,8 +44,17 @@ Model : {
     beat : F32,
 }
 
+# frames per second
 fps : I32
 fps = 60
+
+# beats per minute
+bpm : F32
+bpm = 120
+
+# beats per second
+bps : F32
+bps = bpm / 60
 
 initialWidth = 800f32
 initialHeight = 600f32
@@ -71,12 +104,13 @@ update = \{ model, frameCount, mouse } ->
     # it's supposed to be a stand-in for deltaTime
     deltaFrames = frameCount - model.frameCount
 
-    # a sine wave adjustment added to objects' size
+    # a tweaked sine wave added to objects' size & position
     # ranges from 1.0 to -1.0
     beat =
-        speed = 12.0
         seconds = Num.toF32 frameCount / Num.toF32 fps
-        Num.sin (seconds * speed)
+        secondsRadians = seconds * Num.tau + (Num.pi / 2.0)
+        wave = Num.sin (secondsRadians * bps)
+        if wave < -2 / 3 then -1.0 else wave
 
     (spawnTimer, spawn) =
         tickedTimer = model.spawnTimer + deltaFrames
@@ -90,16 +124,15 @@ update = \{ model, frameCount, mouse } ->
         handleSpawn = \polygons ->
             when spawn is
                 SpawnPentagon ->
-                    polygon = newPentagon model.center
-                    List.append polygons { polygon, age: 0 }
+                    spawned = newSpawnedPentagon model.center
+                    List.append polygons spawned
 
                 None -> polygons
 
         updateAndDespawn = \polygons ->
             polygons |> List.keepOks (\poly -> updatePolygon poly deltaFrames)
 
-        addBeatToPolygon = \polygon ->
-            { polygon & radius: polygon.radius + beat * 10.0 }
+        addBeatToPolygon = \polygon -> { polygon & radius: polygon.radius + beat * 10.0 }
         addBeatToSpawnedPolygons = \polygons ->
             polygons |> List.map (\sp -> { sp & polygon: addBeatToPolygon sp.polygon })
 
@@ -143,7 +176,11 @@ clamp = \n, { min, max } ->
 
 draw : Model -> Task {} {}
 draw = \model ->
-    Task.forEach! model.spawnedPolygons (\sp -> Polygon.draw sp.polygon)
+    Task.forEach! model.spawnedPolygons \sp ->
+        lines = nonGapLines sp
+        Task.forEach! lines \(start, end) ->
+            Raylib.drawLine! { start, end, color: sp.polygon.color }
+
     drawPlayer! model
 
 initialRadius = initialHeight * 0.9
@@ -157,13 +194,35 @@ newPentagon = \center -> {
     center,
 }
 
+newSpawnedPentagon : Vector2 -> SpawnedPolygon
+newSpawnedPentagon = \center ->
+    polygon = newPentagon center
+    gaps = [2, 4]
+    { polygon, gaps, age: 0 }
+
 SpawnedPolygon : {
+    # the full original polygon
+    # avoid using this
     polygon : Polygon,
+    # indexes of the edges to leave out of the polygon
+    gaps : List U64,
+    # frames since spawn
     age : I64,
 }
 
+nonGapLines : SpawnedPolygon -> List (Vector2, Vector2)
+nonGapLines = \sp ->
+    allLines = Polygon.edges sp.polygon
+    List.walkWithIndex allLines [] \filtered, line, i ->
+        if List.contains sp.gaps i then
+            filtered
+        else
+            List.append filtered line
+
 updatePolygon : SpawnedPolygon, I64 -> Result SpawnedPolygon [Despawn]
-updatePolygon = \{ polygon, age }, deltaFrames ->
+updatePolygon = \spawnedPolygon, deltaFrames ->
+    polygon = spawnedPolygon.polygon
+    age = spawnedPolygon.age
     newAge = age + deltaFrames
 
     rotation = Num.toF32 newAge
@@ -186,30 +245,33 @@ updatePolygon = \{ polygon, age }, deltaFrames ->
     if newPolygon.radius < despawnRadius then
         Err Despawn
     else
-        Ok { polygon: newPolygon, age: newAge }
+        Ok { spawnedPolygon & polygon: newPolygon, age: newAge }
 
-drawPlayer : Model -> Task {} {}
-drawPlayer = \{ playerRotation, playerRadius, center, beat } ->
-    (sizeModifier, positionMultiplier) =
-        reverseBeat = -beat
-        if reverseBeat > 0 then
-            sizeMod = (reverseBeat + 1.0) * 0.5
-            (sizeMod, sizeMod * 0.05 + 1.0)
-        else
-            (0.0, 1.0)
+playerSize = 10.0
 
-    playerRadians = Polygon.degreesToRadians playerRotation
+playerPolygon : Model -> Polygon
+playerPolygon = \model ->
+    # reversed from polygons, normalized to between 0 and 1
+    playerBeat = (-model.beat + 1.0) * 0.5
+
+    sizeModifier = playerBeat * 1.5
+    positionMultiplier = playerBeat * 0.05 + 1.0
+
+    playerRadians = Polygon.degreesToRadians model.playerRotation
     playerCenter = {
-        x: center.x + (Num.cos playerRadians) * playerRadius * positionMultiplier,
-        y: center.y + (Num.sin playerRadians) * playerRadius * positionMultiplier,
+        x: model.center.x + (Num.cos playerRadians) * model.playerRadius * positionMultiplier,
+        y: model.center.y + (Num.sin playerRadians) * model.playerRadius * positionMultiplier,
     }
 
-    radius = 10.0 + sizeModifier
-
-    Polygon.draw! {
+    {
         sides: Sides.threePlus 0,
         color: Fuchsia,
-        rotation: playerRotation,
+        rotation: model.playerRotation,
         center: playerCenter,
-        radius,
+        radius: playerSize + sizeModifier,
     }
+
+drawPlayer : Model -> Task {} {}
+drawPlayer = \model ->
+    player = playerPolygon model
+    Polygon.draw! player
