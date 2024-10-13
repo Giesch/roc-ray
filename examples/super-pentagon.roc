@@ -108,11 +108,13 @@ update = \{ model, frameCount, mouse } ->
         |> updateAndDespawn
         |> addBeatToSpawnedPolygons
 
-    intentOffset = 50.0
+    intentRange = 75.0
     intent =
-        holdingLeft = mouse.x > (model.center.x + intentOffset)
-        holdingRight = mouse.x < (model.center.x - intentOffset)
-        if holdingLeft then 1 else (if holdingRight then -1 else 0)
+        mid = model.center.x
+        min = mid - intentRange
+        max = mid + intentRange
+        clamped = clamp mouse.x { min, max }
+        (clamped - mid) / intentRange
 
     playerSpeed = 2
     playerRadius = initialPlayerRadius
@@ -129,6 +131,15 @@ update = \{ model, frameCount, mouse } ->
         playerRadius,
         beat,
     }
+
+clamp : F32, { min : F32, max : F32 } -> F32
+clamp = \n, { min, max } ->
+    if n < min then
+        min
+    else if n > max then
+        max
+    else
+        n
 
 draw : Model -> Task {} {}
 draw = \model ->
@@ -179,13 +190,13 @@ updatePolygon = \{ polygon, age }, deltaFrames ->
 
 drawPlayer : Model -> Task {} {}
 drawPlayer = \{ playerRotation, playerRadius, center, beat } ->
-    { sizeModifier, positionMultiplier } =
+    (sizeModifier, positionMultiplier) =
         reverseBeat = -beat
         if reverseBeat > 0 then
             sizeMod = (reverseBeat + 1.0) * 0.5
-            { sizeModifier: sizeMod, positionMultiplier: sizeMod * 0.05 + 1.0 }
+            (sizeMod, sizeMod * 0.05 + 1.0)
         else
-            { sizeModifier: 0.0, positionMultiplier: 1.0 }
+            (0.0, 1.0)
 
     playerRadians = Polygon.degreesToRadians playerRotation
     playerCenter = {
