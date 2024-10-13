@@ -1,4 +1,4 @@
-module [draw, Polygon, degreesToRadians, radiansToDegrees]
+module [draw, Polygon, degreesToRadians, radiansToDegrees, edges, verticies]
 
 import ray.Raylib exposing [Vector2]
 import Polygon.Sides as Sides exposing [Sides]
@@ -12,26 +12,34 @@ Polygon : {
 }
 
 draw : Polygon -> Task {} {}
-draw = \{ sides, rotation, color, radius, center } ->
-    atAngle = \radians ->
-        x = radius * Num.cos radians
-        y = radius * Num.sin radians
-        addPoints center { x, y }
+draw = \polygon ->
+    Task.forEach (edges polygon) \(start, end) ->
+        Raylib.drawLine! { start: start, end: end, color: polygon.color }
 
-    turn = 360 / (sides |> Sides.count |> Num.toFrac)
-    corners =
-        List.range { start: At 0, end: Length (Sides.count sides) }
-        |> List.map \step -> atAngle ((step * turn + rotation) |> degreesToRadians)
+edges : Polygon -> List (Vector2, Vector2)
+edges = \polygon ->
+    corners = verticies polygon
 
     lastSide =
         when (List.last corners, List.first corners) is
             (Ok last, Ok first) -> (last, first)
             _ -> crash "at least one side per polygon please"
 
-    edges = (slidingPairs corners) |> List.append lastSide
+    (slidingPairs corners) |> List.append lastSide
 
-    Task.forEach edges \(start, end) ->
-        Raylib.drawLine! { start: start, end: end, color: color }
+verticies : Polygon -> List Vector2
+verticies = \{ sides, rotation, radius, center } ->
+    rotationRadians = rotation |> degreesToRadians
+
+    atAngle = \radians ->
+        x = radius * Num.cos radians
+        y = radius * Num.sin radians
+        addPoints center { x, y }
+
+    turnRadians = 2 * Num.pi / (sides |> Sides.count |> Num.toFrac)
+
+    List.range { start: At 0, end: Length (Sides.count sides) }
+    |> List.map \step -> atAngle (step * turnRadians + rotationRadians)
 
 addPoints : Vector2, Vector2 -> Vector2
 addPoints = \a, b ->
