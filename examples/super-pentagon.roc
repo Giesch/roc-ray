@@ -7,10 +7,9 @@ import Polygon exposing [Polygon]
 import raylib.Raylib exposing [Vector2]
 
 # TODO
-# - update platform
-#   - merge upstream
-#   - use platform state
-#   - use keys?
+# - score
+#   - display
+#   - increase on the beat
 #
 # - collision/death
 #   - detect collision
@@ -18,15 +17,16 @@ import raylib.Raylib exposing [Vector2]
 #   - text
 #   - restart button
 #   - high score
-# - score
-#   - display
-#   - increase on the beat
 #
 # - someday
 #   - vary the obstacle shapes
 #     - n sides
 #     - n missing sides
 #     - missing corners?
+#   - update platform
+#     - merge upstream
+#     - use platform state
+#     - use keys?
 
 main = { init, render }
 
