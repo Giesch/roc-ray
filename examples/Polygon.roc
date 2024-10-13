@@ -1,4 +1,4 @@
-module [draw, Polygon, degreesToRadians, radiansToDegrees, edges, verticies]
+module [draw, Polygon, edges, verticies]
 
 import raylib.Raylib exposing [Vector2]
 import Polygon.Sides as Sides exposing [Sides]
@@ -29,8 +29,6 @@ edges = \polygon ->
 
 verticies : Polygon -> List Vector2
 verticies = \{ sides, rotation, radius, center } ->
-    rotationRadians = rotation |> degreesToRadians
-
     atAngle = \radians ->
         x = radius * Num.cos radians
         y = radius * Num.sin radians
@@ -39,7 +37,7 @@ verticies = \{ sides, rotation, radius, center } ->
     turnRadians = Num.tau / (sides |> Sides.count |> Num.toFrac)
 
     List.range { start: At 0, end: Length (Sides.count sides) }
-    |> List.map \step -> atAngle (step * turnRadians + rotationRadians)
+    |> List.map \step -> atAngle (step * turnRadians + rotation)
 
 addPoints : Vector2, Vector2 -> Vector2
 addPoints = \a, b ->
@@ -51,10 +49,3 @@ slidingPairs = \list ->
     offset = (list |> List.sublist { start: 1, len: (List.len list - 1) })
     List.map2 list offset \a, b -> (a, b)
 
-degreesToRadians : F32 -> F32
-degreesToRadians = \deg ->
-    deg * Num.pi / 180.0
-
-radiansToDegrees : F32 -> F32
-radiansToDegrees = \rad ->
-    rad * 180.0 / Num.pi

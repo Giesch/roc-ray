@@ -7,28 +7,26 @@ import Polygon exposing [Polygon]
 import raylib.Raylib exposing [Vector2]
 
 # TODO
-# - update
+# - update platform
 #   - merge upstream
 #   - use platform state
 #   - use keys?
-# - obstacles
-#   - make paths in pentagons
-#   - vary the shapes
-#     - n sides
-#     - n missing sides
-#     - missing corners?
-# - score
-#   - display
-#   - increase on the beat
+#
 # - collision/death
-#   - move player beat into update
 #   - detect collision
 #   - freeze
 #   - text
 #   - restart button
 #   - high score
-# - misc
-#   - use radians everywhere
+# - score
+#   - display
+#   - increase on the beat
+#
+# - someday
+#   - vary the obstacle shapes
+#     - n sides
+#     - n missing sides
+#     - missing corners?
 
 main = { init, render }
 
@@ -70,7 +68,7 @@ init =
         frameCount: 0,
         spawnTimer: 0,
         spawnedPolygons: [],
-        playerRotation: -90.0,
+        playerRotation: -(Num.pi / 2),
         playerRadius: initialPlayerRadius,
         beat: 0.0,
         bpm: 120,
@@ -87,8 +85,8 @@ render = \model ->
     mouse = Raylib.getMousePosition!
 
     newModel = update { model, frameCount, mouse }
-
-    draw! newModel
+    world = modelToWorld newModel
+    draw! world
 
     Task.ok newModel
 
@@ -145,9 +143,9 @@ update = \{ model, frameCount, mouse } ->
         clamped = clamp mouse.x { min, max }
         (clamped - mid) / intentRange
 
-    playerSpeed = 2
+    playerSpeed = 2 / 360
     playerRadius = initialPlayerRadius
-    playerRotation = model.playerRotation + (intent * playerSpeed)
+    playerRotation = model.playerRotation + (intent * playerSpeed * Num.tau)
 
     {
         width: model.width,
@@ -171,14 +169,10 @@ clamp = \n, { min, max } ->
     else
         n
 
-draw : Model -> Task {} {}
-draw = \model ->
-    Task.forEach! model.spawnedPolygons \sp ->
-        lines = nonGapLines sp
-        Task.forEach! lines \(start, end) ->
-            Raylib.drawLine! { start, end, color: sp.polygon.color }
-
-    drawPlayer! model
+draw : World -> Task {} {}
+draw = \world ->
+    Task.forEach! world.obstacles Raylib.drawLine
+    Polygon.draw! world.player
 
 initialRadius = initialHeight * 0.9
 
@@ -222,7 +216,8 @@ updatePolygon = \spawnedPolygon, { bpm, deltaFrames } ->
     age = spawnedPolygon.age
     newAge = age + deltaFrames
 
-    rotation = (bpm / 120) * Num.toF32 newAge
+    rotationDegrees = (bpm / 120) * Num.toF32 newAge
+    rotation = (rotationDegrees / 360) * Num.tau
 
     radius =
         granularity = 600
@@ -244,8 +239,23 @@ updatePolygon = \spawnedPolygon, { bpm, deltaFrames } ->
     else
         Ok { spawnedPolygon & polygon: newPolygon, age: newAge }
 
+World : {
+    player : Polygon,
+    obstacles : List { start : Vector2, end : Vector2, color : Raylib.Color },
+}
+
+modelToWorld : Model -> World
+modelToWorld = \model ->
+    player = playerPolygon model
+    obstacles = List.joinMap model.spawnedPolygons \sp ->
+        lines = nonGapLines sp
+        List.map lines \(start, end) -> { start, end, color: sp.polygon.color }
+    { player, obstacles }
+
 playerSize = 10.0
 
+# TODO move this to update (need explicit stages)
+# spit out a bunch of lines to collide and draw
 playerPolygon : Model -> Polygon
 playerPolygon = \model ->
     # reversed from polygons, normalized to between 0 and 1
@@ -254,10 +264,9 @@ playerPolygon = \model ->
     sizeModifier = playerBeat * 1.5
     positionMultiplier = playerBeat * 0.05 + 1.0
 
-    playerRadians = Polygon.degreesToRadians model.playerRotation
     playerCenter = {
-        x: model.center.x + (Num.cos playerRadians) * model.playerRadius * positionMultiplier,
-        y: model.center.y + (Num.sin playerRadians) * model.playerRadius * positionMultiplier,
+        x: model.center.x + (Num.cos model.playerRotation) * model.playerRadius * positionMultiplier,
+        y: model.center.y + (Num.sin model.playerRotation) * model.playerRadius * positionMultiplier,
     }
 
     {
@@ -268,7 +277,3 @@ playerPolygon = \model ->
         radius: playerSize + sizeModifier,
     }
 
-drawPlayer : Model -> Task {} {}
-drawPlayer = \model ->
-    player = playerPolygon model
-    Polygon.draw! player
