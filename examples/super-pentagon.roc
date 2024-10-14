@@ -7,16 +7,13 @@ import Polygon exposing [Polygon]
 import raylib.Raylib exposing [Vector2]
 
 # TODO
-# next:
-# - collision/death
-#   - restart button
-#   - high score
+# - high score
 #
-# someday:
 # - vary the obstacle shapes
 #   - n sides
 #   - n missing sides
 #   - missing corners?
+#
 # - update platform
 #   - merge upstream
 #   - use platform state
@@ -26,8 +23,6 @@ main = { init, render }
 
 Model : {
     screen : [Playing, GameOver GameOverModel],
-    width : F32,
-    height : F32,
     center : Vector2,
     frameCount : I64,
     spawnTimer : I64,
@@ -57,15 +52,14 @@ init =
     Raylib.setWindowTitle! "Super Pentagon"
     Raylib.setTargetFPS! fps
 
-    center = {
-        x: windowWidth / 2,
-        y: windowHeight / 2,
-    }
+    Task.ok newGame
 
-    Task.ok {
+newGame : Model
+newGame =
+    center = { x: windowWidth / 2, y: windowHeight / 2 }
+
+    {
         screen: Playing,
-        width: windowWidth,
-        height: windowHeight,
         center,
         frameCount: 0,
         spawnTimer: 0,
@@ -87,11 +81,13 @@ render : Model -> Task Model {}
 render = \model ->
     frameCount = Raylib.getFrameCount!
     mouse = Raylib.getMousePosition!
+    mouseButtons = Raylib.mouseButtons!
+    click = if mouseButtons.left then LeftClick else None
 
     newModel =
         when model.screen is
             Playing -> update { model, frameCount, mouse }
-            GameOver gameOver -> gameOverUpdate model gameOver
+            GameOver gameOver -> gameOverUpdate model gameOver click
 
     draw! (drawModel newModel)
 
@@ -166,8 +162,6 @@ update = \{ model, frameCount, mouse } ->
     newModel : Model
     newModel = {
         screen: model.screen,
-        width: model.width,
-        height: model.height,
         center: model.center,
         bpm: model.bpm,
         frameCount,
@@ -200,11 +194,10 @@ updateCollision = \model ->
         { playerLines, obstacleLines }
 
     if checkCollision collisionModel then
-        screen = GameOver { age: 0, scoreOffset: 0 }
+        screen = GameOver { age: 0, animation: Drifting 0.0 }
         { model & screen }
     else
         model
-
 
 CollisionModel : {
     playerLines : List (Vector2, Vector2),
@@ -226,7 +219,7 @@ checkCollision = \{ playerLines, obstacleLines } ->
         List.any playerLines \playerLine -> intersect playerLine obstacleLine
 
 DrawSlice model : {
-    screen: [Playing, GameOver GameOverModel],
+    screen : [Playing, GameOver GameOverModel],
     beat : F32,
     center : Vector2,
     playerRotation : F32,
@@ -246,7 +239,7 @@ drawModel = \model ->
     { player, obstacles, score: model.score, beat: model.beat, screen: model.screen }
 
 DrawModel : {
-    screen: [Playing, GameOver GameOverModel ],
+    screen : [Playing, GameOver GameOverModel],
     player : Polygon,
     obstacles : List { start : Vector2, end : Vector2, color : Raylib.Color },
     score : U64,
@@ -255,17 +248,15 @@ DrawModel : {
 
 draw : DrawModel -> Task {} {}
 draw = \model ->
-    overwriteColor = \color ->
-        when model.screen is
-            Playing -> color
-            _ -> Red
-        
-    obstacles = List.map model.obstacles \obstacle -> 
-        { obstacle & color: overwriteColor obstacle.color }
-    Task.forEach! obstacles Raylib.drawLine
+    Task.forEach! model.obstacles Raylib.drawLine
 
     player = model.player
-    Polygon.draw! { player & color: overwriteColor player.color }
+    playerColor =
+        when model.screen is
+            Playing -> player.color
+            _ -> Red
+
+    Polygon.draw! { player & color: playerColor }
 
     drawScore! model
 
@@ -285,13 +276,19 @@ drawScore = \model ->
         |> Num.floor
 
     text = Num.toStr (model.score + 1)
+    drawScoreNumber = \{ offset } ->
+        margin = 50
+        Raylib.drawText! { text, size, x: margin + offset, y: margin, color: White }
 
-    offset = 
-        when model.screen is 
-            GameOver { scoreOffset } -> scoreOffset
-            Playing -> 0
+    when model.screen is
+        Playing -> drawScoreNumber { offset: 0 }
+        GameOver { animation } ->
+            when animation is
+                Drifting offset -> drawScoreNumber { offset }
+                OfferRestart -> drawRestart
 
-    Raylib.drawText! { text, size, x: 50 + offset, y: 50, color: White }
+drawRestart =
+    Raylib.drawText { text: "Restart?", size: 30, x: 600, y: 400, color: White }
 
 newPentagon : Vector2 -> Polygon
 newPentagon = \center -> {
@@ -387,15 +384,19 @@ playerPolygon = \model ->
 
 GameOverModel : {
     age : U64,
-    scoreOffset : F32,
+    animation : [Drifting F32, OfferRestart],
 }
 
-gameOverUpdate : Model, GameOverModel -> Model
-gameOverUpdate = \model, gameOver ->
-    newGameOver = {
-        scoreOffset: gameOver.scoreOffset + 2,
-        age: gameOver.age + 1,
-    }
+gameOverUpdate : Model, GameOverModel, [LeftClick]* -> Model
+gameOverUpdate = \model, gameOver, click ->
+    age = gameOver.age + 1
+    offset = Num.toFrac age * 2
+    animation =
+        if offset < windowWidth then
+            Drifting offset
+        else
+            OfferRestart
 
-    { model & screen: GameOver newGameOver }
-
+    when (animation, click) is
+        (OfferRestart, LeftClick) -> newGame
+        _ -> { model & screen: GameOver { age, animation } }

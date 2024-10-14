@@ -8,13 +8,13 @@ list:
     just --list --unsorted
 
 [linux]
-dev app:
+dev app="examples/super-pentagon.roc":
     zig build --release=fast -Dapp="{{app}}"
     ./zig-out/bin/rocray
 
 # build and run the executable
 [windows]
-dev app:
+dev app="examples/super-pentagon.roc":
     $env:path = "$(pwd)\windows\bin;$($env:path)"; zig.exe build --release=fast -Dapp="{{app}}"
     .\zig-out\bin\rocray.exe
 
