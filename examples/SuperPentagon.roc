@@ -1,10 +1,10 @@
 app [main, Model] {
-    raylib: platform "../platform/main.roc",
+    ray: platform "../platform/main.roc",
 }
 
-import Polygon.Sides as Sides
-import Polygon exposing [Polygon]
-import raylib.Raylib exposing [Vector2]
+import SuperPentagon.Polygon.Sides as Sides
+import SuperPentagon.Polygon as Polygon exposing [Polygon]
+import ray.Raylib exposing [Vector2]
 
 # TODO
 # - high score

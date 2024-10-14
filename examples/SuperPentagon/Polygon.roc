@@ -5,8 +5,8 @@ module [
     verticies,
 ]
 
-import raylib.Raylib exposing [Vector2]
-import Polygon.Sides as Sides exposing [Sides]
+import ray.Raylib exposing [Vector2]
+import SuperPentagon.Polygon.Sides as Sides exposing [Sides]
 
 Polygon : {
     sides : Sides,
@@ -53,4 +53,3 @@ slidingPairs = \list ->
     # thanks Aurelien
     offset = (list |> List.sublist { start: 1, len: (List.len list - 1) })
     List.map2 list offset \a, b -> (a, b)
-
