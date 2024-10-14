@@ -7,22 +7,24 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 list:
     just --list --unsorted
 
-# build and run the executable
-[linux]
-dev app:
-    zig build --release=fast -Dapp="{{app}}"
-    ./zig-out/bin/rocray
-
-# build and run the executable
-[windows]
-dev app:
-    $env:path = "$(pwd)\windows\bin;$($env:path)"; zig.exe build --release=fast -Dapp="{{app}}"
-    .\zig-out\bin\rocray.exe
-
 # install zig with winget and download roc binary to ./windows/bin/
 [windows]
 setup:
     ./windows/setup.ps1
+
+
+# build and run the executable
+[windows]
+dev app="examples/SuperPentagon.roc":
+    $env:path = "$(pwd)\windows\bin;$($env:path)"; zig.exe build --release=fast -Dapp="{{app}}"
+    .\zig-out\bin\rocray.exe
+
+# build and run the executable
+[linux]
+dev app="examples/SuperPentagon.roc":
+    zig build --release=fast -Dapp="{{app}}"
+    ./zig-out/bin/rocray
+
 
 # clean build artifacts
 [windows]
@@ -34,14 +36,20 @@ clean:
 clean:
     git clean -dfx
 
-[linux]
-format app:
-    roc format {{app}}
 
 [windows]
-format app:
+check app="examples/SuperPentagon.roc":
+    $env:path = "$(pwd)\windows\bin;$($env:path)"; roc check {{app}}
+
+[linux]
+check app="examples/SuperPentagon.roc":
+    roc check {{app}}
+
+
+[windows]
+format app="examples/SuperPentagon.roc":
     $env:path = "$(pwd)\windows\bin;$($env:path)"; roc format {{app}}
 
 [linux]
-check app:
-    roc check {{app}}
+format app="examples/SuperPentagon.roc":
+    roc format {{app}}
