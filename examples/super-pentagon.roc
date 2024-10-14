@@ -9,8 +9,6 @@ import raylib.Raylib exposing [Vector2]
 # TODO
 # next:
 # - collision/death
-#   - text
-#   - animation
 #   - restart button
 #   - high score
 #
@@ -27,7 +25,7 @@ import raylib.Raylib exposing [Vector2]
 main = { init, render }
 
 Model : {
-    screen : [Playing, GameOver],
+    screen : [Playing, GameOver GameOverModel],
     width : F32,
     height : F32,
     center : Vector2,
@@ -93,7 +91,7 @@ render = \model ->
     newModel =
         when model.screen is
             Playing -> update { model, frameCount, mouse }
-            GameOver -> model
+            GameOver gameOver -> gameOverUpdate model gameOver
 
     draw! (drawModel newModel)
 
@@ -201,13 +199,12 @@ updateCollision = \model ->
         obstacleLines = List.joinMap model.spawnedPolygons \sp -> nonGapLines sp
         { playerLines, obstacleLines }
 
-    screen =
-        if checkCollision collisionModel then
-            GameOver
-        else
-            Playing
+    if checkCollision collisionModel then
+        screen = GameOver { age: 0, scoreOffset: 0 }
+        { model & screen }
+    else
+        model
 
-    { model & screen }
 
 CollisionModel : {
     playerLines : List (Vector2, Vector2),
@@ -229,6 +226,7 @@ checkCollision = \{ playerLines, obstacleLines } ->
         List.any playerLines \playerLine -> intersect playerLine obstacleLine
 
 DrawSlice model : {
+    screen: [Playing, GameOver GameOverModel],
     beat : F32,
     center : Vector2,
     playerRotation : F32,
@@ -240,13 +238,15 @@ DrawSlice model : {
 drawModel : DrawSlice m -> DrawModel
 drawModel = \model ->
     player = playerPolygon model
-    obstacles = List.joinMap model.spawnedPolygons \sp ->
-        lines = nonGapLines sp
-        List.map lines \(start, end) -> { start, end, color: sp.polygon.color }
+    obstacles = List.joinMap model.spawnedPolygons \spawnedPolygon ->
+        lines = nonGapLines spawnedPolygon
+        color = spawnedPolygon.polygon.color
+        List.map lines \(start, end) -> { start, end, color }
 
-    { player, obstacles, score: model.score, beat: model.beat }
+    { player, obstacles, score: model.score, beat: model.beat, screen: model.screen }
 
 DrawModel : {
+    screen: [Playing, GameOver GameOverModel ],
     player : Polygon,
     obstacles : List { start : Vector2, end : Vector2, color : Raylib.Color },
     score : U64,
@@ -255,8 +255,18 @@ DrawModel : {
 
 draw : DrawModel -> Task {} {}
 draw = \model ->
-    Task.forEach! model.obstacles Raylib.drawLine
-    Polygon.draw! model.player
+    overwriteColor = \color ->
+        when model.screen is
+            Playing -> color
+            _ -> Red
+        
+    obstacles = List.map model.obstacles \obstacle -> 
+        { obstacle & color: overwriteColor obstacle.color }
+    Task.forEach! obstacles Raylib.drawLine
+
+    player = model.player
+    Polygon.draw! { player & color: overwriteColor player.color }
+
     drawScore! model
 
 drawScore : DrawModel -> Task {} {}
@@ -276,7 +286,12 @@ drawScore = \model ->
 
     text = Num.toStr (model.score + 1)
 
-    Raylib.drawText! { text, size, x: 50, y: 50, color: White }
+    offset = 
+        when model.screen is 
+            GameOver { scoreOffset } -> scoreOffset
+            Playing -> 0
+
+    Raylib.drawText! { text, size, x: 50 + offset, y: 50, color: White }
 
 newPentagon : Vector2 -> Polygon
 newPentagon = \center -> {
@@ -369,3 +384,18 @@ playerPolygon = \model ->
         center: playerCenter,
         radius: playerSize + sizeModifier,
     }
+
+GameOverModel : {
+    age : U64,
+    scoreOffset : F32,
+}
+
+gameOverUpdate : Model, GameOverModel -> Model
+gameOverUpdate = \model, gameOver ->
+    newGameOver = {
+        scoreOffset: gameOver.scoreOffset + 2,
+        age: gameOver.age + 1,
+    }
+
+    { model & screen: GameOver newGameOver }
+
