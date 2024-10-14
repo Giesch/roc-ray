@@ -201,7 +201,11 @@ updateCollision = \model ->
         obstacleLines = List.joinMap model.spawnedPolygons \sp -> nonGapLines sp
         { playerLines, obstacleLines }
 
-    screen = if checkCollision collisionModel then GameOver else Playing
+    screen =
+        if checkCollision collisionModel then
+            GameOver
+        else
+            Playing
 
     { model & screen }
 
@@ -221,11 +225,26 @@ checkCollision = \{ playerLines, obstacleLines } ->
     intersect = \(a, b), (c, d) ->
         clockwise a c d != clockwise b c d && clockwise a b c != clockwise a b d
 
-    List.walkUntil obstacleLines Bool.false \_, obstacleLine ->
-        if List.any playerLines \playerLine -> intersect playerLine obstacleLine then
-            Break Bool.true
-        else
-            Continue Bool.false
+    List.any obstacleLines \obstacleLine ->
+        List.any playerLines \playerLine -> intersect playerLine obstacleLine
+
+DrawSlice model : {
+    beat : F32,
+    center : Vector2,
+    playerRotation : F32,
+    playerRadius : F32,
+    spawnedPolygons : List SpawnedPolygon,
+    score : U64,
+}model
+
+drawModel : DrawSlice m -> DrawModel
+drawModel = \model ->
+    player = playerPolygon model
+    obstacles = List.joinMap model.spawnedPolygons \sp ->
+        lines = nonGapLines sp
+        List.map lines \(start, end) -> { start, end, color: sp.polygon.color }
+
+    { player, obstacles, score: model.score, beat: model.beat }
 
 DrawModel : {
     player : Polygon,
@@ -321,24 +340,6 @@ updatePolygon = \spawnedPolygon, { bpm, deltaFrames } ->
         Err Despawn
     else
         Ok { spawnedPolygon & polygon: newPolygon, age: newAge }
-
-DrawSlice model : {
-    beat : F32,
-    center : Vector2,
-    playerRotation : F32,
-    playerRadius : F32,
-    spawnedPolygons : List SpawnedPolygon,
-    score : U64,
-}model
-
-drawModel : DrawSlice m -> DrawModel
-drawModel = \model ->
-    player = playerPolygon model
-    obstacles = List.joinMap model.spawnedPolygons \sp ->
-        lines = nonGapLines sp
-        List.map lines \(start, end) -> { start, end, color: sp.polygon.color }
-
-    { player, obstacles, score: model.score, beat: model.beat }
 
 PlayerSlice model : {
     beat : F32,
