@@ -5,7 +5,7 @@ module [
     edges,
     lines,
     new,
-    updateAge,
+    setAge,
     updatePolygon,
 ]
 
@@ -33,8 +33,8 @@ updatePolygon : Obstacle, (Polygon -> Polygon) -> Obstacle
 updatePolygon = \@Obstacle obstacle, update ->
     @Obstacle { obstacle & polygon: update obstacle.polygon }
 
-updateAge : Obstacle, I64 -> Obstacle
-updateAge = \@Obstacle obstacle, newAge -> @Obstacle { obstacle & age: newAge }
+setAge : Obstacle, I64 -> Obstacle
+setAge = \@Obstacle obstacle, newAge -> @Obstacle { obstacle & age: newAge }
 
 age : Obstacle -> I64
 age = \@Obstacle obstacle -> obstacle.age

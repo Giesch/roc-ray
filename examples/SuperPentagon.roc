@@ -50,7 +50,7 @@ windowHeight = 600f32
 
 initialBpm = 120
 playerSize = 10.0
-initialPentagonRadius = windowHeight * 0.9
+initialObstacleRadius = windowHeight * 0.9
 
 init : Task Model {}
 init =
@@ -297,7 +297,7 @@ pentagonObstacle = \center ->
         sides: Sides.threePlus 2,
         rotation: 0.0,
         color: Silver,
-        radius: initialPentagonRadius,
+        radius: initialObstacleRadius,
         center,
     }
     gaps = [2, 4]
@@ -316,19 +316,17 @@ updateObstacle = \obstacle, { bpm, deltaFrames } ->
         num =
             newAge
             |> Num.rem granularity
-            |> \n -> (Num.toF32 granularity - Num.toF32 n)
-            |> \n -> n * initialPentagonRadius
+            |> \n -> initialObstacleRadius * Num.toF32 (granularity - n)
         denom = Num.toF32 granularity
         num / denom
 
     if radius < 1 then
         Err Despawn
     else
-        newObstacle =
-            obstacle
-            |> Obstacle.updatePolygon \polygon -> { polygon & rotation, radius }
-            |> Obstacle.updateAge newAge
-        Ok newObstacle
+        obstacle
+        |> Obstacle.updatePolygon \polygon -> { polygon & rotation, radius }
+        |> Obstacle.setAge newAge
+        |> Ok
 
 PlayerSlice model : {
     beat : F32,
