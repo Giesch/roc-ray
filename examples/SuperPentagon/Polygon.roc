@@ -2,10 +2,12 @@ module [
     Polygon,
     draw,
     edges,
+    lines,
     verticies,
 ]
 
 import ray.Raylib exposing [Vector2]
+
 import SuperPentagon.Polygon.Sides as Sides exposing [Sides]
 
 Polygon : {
@@ -32,6 +34,11 @@ edges = \polygon ->
 
     (slidingPairs corners) |> List.append lastSide
 
+lines : Polygon -> List { start : Vector2, end : Vector2, color : Raylib.Color }
+lines = \polygon ->
+    List.map (edges polygon) \(start, end) ->
+        { start, end, color: polygon.color }
+
 verticies : Polygon -> List Vector2
 verticies = \{ sides, rotation, radius, center } ->
     atAngle = \radians ->
@@ -53,3 +60,4 @@ slidingPairs = \list ->
     # thanks Aurelien
     offset = (list |> List.sublist { start: 1, len: (List.len list - 1) })
     List.map2 list offset \a, b -> (a, b)
+

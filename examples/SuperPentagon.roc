@@ -2,22 +2,28 @@ app [main, Model] {
     ray: platform "../platform/main.roc",
 }
 
-import SuperPentagon.Polygon.Sides as Sides
-import SuperPentagon.Polygon as Polygon exposing [Polygon]
 import ray.Raylib exposing [Vector2]
 
+import SuperPentagon.Polygon.Sides as Sides
+import SuperPentagon.Polygon as Polygon exposing [Polygon]
+import SuperPentagon.Obstacle as Obstacle exposing [Obstacle]
+
 # TODO
-# - high score
+# - recent high score
 #
-# - vary the obstacle shapes
-#   - n sides
-#   - n missing sides
-#   - missing corners?
+# - more gameplay
+#   - get faster/harder over time
+#   - vary the obstacle shapes
+#     - n sides
+#     - n missing sides
+#     - missing corners?
 #
 # - update platform
 #   - merge upstream
 #   - use platform state
 #   - use keys? for pause?
+#
+# - high score screen (save on disk? input initials?)
 
 main = { init, render }
 
@@ -26,7 +32,7 @@ Model : {
     center : Vector2,
     frameCount : I64,
     spawnTimer : I64,
-    spawnedPolygons : List SpawnedPolygon,
+    obstacles : List Obstacle,
     playerRotation : F32,
     playerRadius : F32,
     bpm : F32,
@@ -63,7 +69,7 @@ newGame =
         center,
         frameCount: 0,
         spawnTimer: 0,
-        spawnedPolygons: [],
+        obstacles: [],
         playerRotation: -(Num.pi / 2),
         playerRadius: initialPlayerRadius,
         bpm: initialBpm,
@@ -120,28 +126,27 @@ update = \{ model, frameCount, mouse } ->
         else
             (tickedTimer, None)
 
-    spawnedPolygons : List SpawnedPolygon
-    spawnedPolygons =
-        handleSpawn = \polygons ->
+    obstacles : List Obstacle
+    obstacles =
+        handleSpawn = \oldObstacles ->
             when spawn is
+                None -> oldObstacles
                 SpawnPentagon ->
-                    spawned = newSpawnedPentagon model.center
-                    List.append polygons spawned
+                    List.append oldObstacles (pentagonObstacle model.center)
 
-                None -> polygons
+        updateAndDespawn = \oldObstacles ->
+            List.keepOks oldObstacles \obs ->
+                updateObstacle obs { deltaFrames, bpm: model.bpm }
 
-        updateAndDespawn = \polygons ->
-            List.keepOks polygons \poly ->
-                updatePolygon poly { deltaFrames, bpm: model.bpm }
+        addBeatToPolygon = \polygon ->
+            { polygon & radius: polygon.radius + beat * 10.0 }
+        addBeatToObstacles = \polygons ->
+            polygons |> List.map (\obs -> Obstacle.updatePolygon obs addBeatToPolygon)
 
-        addBeatToPolygon = \polygon -> { polygon & radius: polygon.radius + beat * 10.0 }
-        addBeatToSpawnedPolygons = \polygons ->
-            polygons |> List.map (\sp -> { sp & polygon: addBeatToPolygon sp.polygon })
-
-        model.spawnedPolygons
+        model.obstacles
         |> handleSpawn
         |> updateAndDespawn
-        |> addBeatToSpawnedPolygons
+        |> addBeatToObstacles
 
     intentRange = 75.0
     intent =
@@ -166,7 +171,7 @@ update = \{ model, frameCount, mouse } ->
         bpm: model.bpm,
         frameCount,
         spawnTimer,
-        spawnedPolygons,
+        obstacles,
         playerRotation,
         playerRadius,
         beat,
@@ -190,7 +195,7 @@ updateCollision = \model ->
     collisionModel : CollisionModel
     collisionModel =
         playerLines = model |> playerPolygon |> Polygon.edges
-        obstacleLines = List.joinMap model.spawnedPolygons \sp -> nonGapLines sp
+        obstacleLines = List.joinMap model.obstacles Obstacle.edges
         { playerLines, obstacleLines }
 
     if checkCollision collisionModel then
@@ -224,31 +229,27 @@ DrawSlice model : {
     center : Vector2,
     playerRotation : F32,
     playerRadius : F32,
-    spawnedPolygons : List SpawnedPolygon,
+    obstacles : List Obstacle,
     score : U64,
 }model
 
 drawModel : DrawSlice m -> DrawModel
 drawModel = \model ->
     player = playerPolygon model
-    obstacles = List.joinMap model.spawnedPolygons \spawnedPolygon ->
-        lines = nonGapLines spawnedPolygon
-        color = spawnedPolygon.polygon.color
-        List.map lines \(start, end) -> { start, end, color }
-
-    { player, obstacles, score: model.score, beat: model.beat, screen: model.screen }
+    obstacleLines = List.joinMap model.obstacles Obstacle.lines
+    { player, obstacleLines, score: model.score, beat: model.beat, screen: model.screen }
 
 DrawModel : {
     screen : [Playing, GameOver GameOverModel],
     player : Polygon,
-    obstacles : List { start : Vector2, end : Vector2, color : Raylib.Color },
+    obstacleLines : List { start : Vector2, end : Vector2, color : Raylib.Color },
     score : U64,
     beat : F32,
 }
 
 draw : DrawModel -> Task {} {}
 draw = \model ->
-    Task.forEach! model.obstacles Raylib.drawLine
+    Task.forEach! model.obstacleLines Raylib.drawLine
 
     player = model.player
     playerColor =
@@ -290,44 +291,21 @@ drawScore = \model ->
 drawRestart =
     Raylib.drawText { text: "Restart?", size: 30, x: 600, y: 400, color: White }
 
-newPentagon : Vector2 -> Polygon
-newPentagon = \center -> {
-    sides: Sides.threePlus 2,
-    rotation: 0.0,
-    color: Silver,
-    radius: initialPentagonRadius,
-    center,
-}
-
-newSpawnedPentagon : Vector2 -> SpawnedPolygon
-newSpawnedPentagon = \center ->
-    polygon = newPentagon center
+pentagonObstacle : Vector2 -> Obstacle
+pentagonObstacle = \center ->
+    polygon = {
+        sides: Sides.threePlus 2,
+        rotation: 0.0,
+        color: Silver,
+        radius: initialPentagonRadius,
+        center,
+    }
     gaps = [2, 4]
-    { polygon, gaps, age: 0 }
+    Obstacle.new { polygon, gaps }
 
-SpawnedPolygon : {
-    # the full original polygon
-    # avoid using this
-    polygon : Polygon,
-    # indexes of the edges to leave out of the polygon
-    gaps : List U64,
-    # frames since spawn
-    age : I64,
-}
-
-nonGapLines : SpawnedPolygon -> List (Vector2, Vector2)
-nonGapLines = \sp ->
-    allLines = Polygon.edges sp.polygon
-    List.walkWithIndex allLines [] \filtered, line, i ->
-        if List.contains sp.gaps i then
-            filtered
-        else
-            List.append filtered line
-
-updatePolygon : SpawnedPolygon, { bpm : F32, deltaFrames : I64 } -> Result SpawnedPolygon [Despawn]
-updatePolygon = \spawnedPolygon, { bpm, deltaFrames } ->
-    polygon = spawnedPolygon.polygon
-    age = spawnedPolygon.age
+updateObstacle : Obstacle, { bpm : F32, deltaFrames : I64 } -> Result Obstacle [Despawn]
+updateObstacle = \obstacle, { bpm, deltaFrames } ->
+    age = Obstacle.age obstacle
     newAge = age + deltaFrames
 
     rotationDegrees = (bpm / 120) * Num.toF32 newAge
@@ -343,15 +321,14 @@ updatePolygon = \spawnedPolygon, { bpm, deltaFrames } ->
         denom = Num.toF32 granularity
         num / denom
 
-    newPolygon = { polygon & rotation, radius }
-
-    # setting this too small results in no despawns
-    despawnRadius = 1
-
-    if newPolygon.radius < despawnRadius then
+    if radius < 1 then
         Err Despawn
     else
-        Ok { spawnedPolygon & polygon: newPolygon, age: newAge }
+        newObstacle =
+            obstacle
+            |> Obstacle.updatePolygon \polygon -> { polygon & rotation, radius }
+            |> Obstacle.updateAge newAge
+        Ok newObstacle
 
 PlayerSlice model : {
     beat : F32,
