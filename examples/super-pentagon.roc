@@ -31,6 +31,7 @@ import raylib.Raylib exposing [Vector2]
 main = { init, render }
 
 Model : {
+    screen : [Playing, GameOver],
     width : F32,
     height : F32,
     center : Vector2,
@@ -47,23 +48,28 @@ Model : {
 fps : I32
 fps = 60
 
-initialWidth = 800f32
-initialHeight = 600f32
+windowWidth = 800f32
+windowHeight = 600f32
+
+initialBpm = 120
+playerSize = 10.0
+initialPentagonRadius = windowHeight * 0.9
 
 init : Task Model {}
 init =
-    Raylib.setWindowSize! { width: initialWidth, height: initialHeight }
+    Raylib.setWindowSize! { width: windowWidth, height: windowHeight }
     Raylib.setWindowTitle! "Super Pentagon"
     Raylib.setTargetFPS! fps
 
     center = {
-        x: initialWidth / 2,
-        y: initialHeight / 2,
+        x: windowWidth / 2,
+        y: windowHeight / 2,
     }
 
     Task.ok {
-        width: initialWidth,
-        height: initialHeight,
+        screen: Playing,
+        width: windowWidth,
+        height: windowHeight,
         center,
         frameCount: 0,
         spawnTimer: 0,
@@ -71,7 +77,7 @@ init =
         playerRotation: -(Num.pi / 2),
         playerRadius: initialPlayerRadius,
         beat: 0.0,
-        bpm: 120,
+        bpm: initialBpm,
     }
 
 initialPlayerRadius = 80.0
@@ -84,9 +90,12 @@ render = \model ->
     frameCount = Raylib.getFrameCount!
     mouse = Raylib.getMousePosition!
 
-    newModel = update { model, frameCount, mouse }
-    world = modelToWorld newModel
-    draw! world
+    newModel =
+        when model.screen is
+            Playing -> update { model, frameCount, mouse }
+            GameOver -> model
+
+    draw! (modelToWorld newModel)
 
     Task.ok newModel
 
@@ -140,6 +149,10 @@ update = \{ model, frameCount, mouse } ->
         mid = model.center.x
         min = mid - intentRange
         max = mid + intentRange
+        # This causes a compiler crash
+        # mouse.x
+        # |> clamp { min, max }
+        # |> \clamped -> (clamped - mid) / intentRange
         clamped = clamp mouse.x { min, max }
         (clamped - mid) / intentRange
 
@@ -147,7 +160,9 @@ update = \{ model, frameCount, mouse } ->
     playerRadius = initialPlayerRadius
     playerRotation = model.playerRotation + (intent * playerSpeed * Num.tau)
 
-    {
+    worldModel : Model
+    worldModel = {
+        screen: model.screen,
         width: model.width,
         height: model.height,
         center: model.center,
@@ -160,6 +175,8 @@ update = \{ model, frameCount, mouse } ->
         beat,
     }
 
+    updateCollision worldModel
+
 clamp : F32, { min : F32, max : F32 } -> F32
 clamp = \n, { min, max } ->
     if n < min then
@@ -169,19 +186,56 @@ clamp = \n, { min, max } ->
     else
         n
 
-draw : World -> Task {} {}
+updateCollision : Model -> Model
+updateCollision = \model ->
+    collisionModel : CollisionModel
+    collisionModel =
+        playerLines = model |> playerPolygon |> Polygon.edges
+        obstacleLines = List.joinMap model.spawnedPolygons \sp -> nonGapLines sp
+        { playerLines, obstacleLines }
+
+    screen = if checkCollision collisionModel then GameOver else Playing
+
+    { model & screen }
+
+CollisionModel : {
+    playerLines : List (Vector2, Vector2),
+    obstacleLines : List (Vector2, Vector2),
+}
+
+checkCollision : CollisionModel -> Bool
+checkCollision = \{ playerLines, obstacleLines } ->
+    # https://stackoverflow.com/a/9997374
+    clockwise : Vector2, Vector2, Vector2 -> Bool
+    clockwise = \a, b, c ->
+        (c.y - a.y) * (b.x - a.x) <= (b.y - a.y) * (c.x - a.x)
+
+    intersect : (Vector2, Vector2), (Vector2, Vector2) -> Bool
+    intersect = \(a, b), (c, d) ->
+        clockwise a c d != clockwise b c d && clockwise a b c != clockwise a b d
+
+    List.walkUntil obstacleLines Bool.false \_, obstacleLine ->
+        if List.any playerLines \playerLine -> intersect playerLine obstacleLine then
+            Break Bool.true
+        else
+            Continue Bool.false
+
+DrawModel : {
+    player : Polygon,
+    obstacles : List { start : Vector2, end : Vector2, color : Raylib.Color },
+}
+
+draw : DrawModel -> Task {} {}
 draw = \world ->
     Task.forEach! world.obstacles Raylib.drawLine
     Polygon.draw! world.player
-
-initialRadius = initialHeight * 0.9
 
 newPentagon : Vector2 -> Polygon
 newPentagon = \center -> {
     sides: Sides.threePlus 2,
     rotation: 0.0,
     color: Silver,
-    radius: initialRadius,
+    radius: initialPentagonRadius,
     center,
 }
 
@@ -225,7 +279,7 @@ updatePolygon = \spawnedPolygon, { bpm, deltaFrames } ->
             newAge
             |> Num.rem granularity
             |> \n -> (Num.toF32 granularity - Num.toF32 n)
-            |> \n -> n * initialRadius
+            |> \n -> n * initialPentagonRadius
         denom = Num.toF32 granularity
         num / denom
 
@@ -239,12 +293,15 @@ updatePolygon = \spawnedPolygon, { bpm, deltaFrames } ->
     else
         Ok { spawnedPolygon & polygon: newPolygon, age: newAge }
 
-World : {
-    player : Polygon,
-    obstacles : List { start : Vector2, end : Vector2, color : Raylib.Color },
-}
+PhysicsSlice model : {
+    beat : F32,
+    center : Vector2,
+    playerRotation : F32,
+    playerRadius : F32,
+    spawnedPolygons : List SpawnedPolygon,
+}model
 
-modelToWorld : Model -> World
+modelToWorld : PhysicsSlice m -> DrawModel
 modelToWorld = \model ->
     player = playerPolygon model
     obstacles = List.joinMap model.spawnedPolygons \sp ->
@@ -252,11 +309,14 @@ modelToWorld = \model ->
         List.map lines \(start, end) -> { start, end, color: sp.polygon.color }
     { player, obstacles }
 
-playerSize = 10.0
+PlayerSlice model : {
+    beat : F32,
+    center : Vector2,
+    playerRotation : F32,
+    playerRadius : F32,
+}model
 
-# TODO move this to update (need explicit stages)
-# spit out a bunch of lines to collide and draw
-playerPolygon : Model -> Polygon
+playerPolygon : PlayerSlice m -> Polygon
 playerPolygon = \model ->
     # reversed from polygons, normalized to between 0 and 1
     playerBeat = (-model.beat + 1.0) * 0.5
@@ -264,10 +324,11 @@ playerPolygon = \model ->
     sizeModifier = playerBeat * 1.5
     positionMultiplier = playerBeat * 0.05 + 1.0
 
-    playerCenter = {
-        x: model.center.x + (Num.cos model.playerRotation) * model.playerRadius * positionMultiplier,
-        y: model.center.y + (Num.sin model.playerRotation) * model.playerRadius * positionMultiplier,
-    }
+    playerCenter =
+        distance = model.playerRadius * positionMultiplier
+        x = model.center.x + (Num.cos model.playerRotation) * distance
+        y = model.center.y + (Num.sin model.playerRotation) * distance
+        { x, y }
 
     {
         sides: Sides.threePlus 0,
@@ -276,4 +337,3 @@ playerPolygon = \model ->
         center: playerCenter,
         radius: playerSize + sizeModifier,
     }
-
