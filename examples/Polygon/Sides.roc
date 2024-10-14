@@ -1,4 +1,9 @@
-module [sides, count, threePlus, Sides]
+module [
+    Sides,
+    count,
+    sides,
+    threePlus,
+]
 
 Sides := U64
 

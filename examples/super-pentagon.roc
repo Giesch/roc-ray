@@ -7,26 +7,22 @@ import Polygon exposing [Polygon]
 import raylib.Raylib exposing [Vector2]
 
 # TODO
-# - score
-#   - display
-#   - increase on the beat
-#
+# next:
 # - collision/death
-#   - detect collision
-#   - freeze
 #   - text
+#   - animation
 #   - restart button
 #   - high score
 #
-# - someday
-#   - vary the obstacle shapes
-#     - n sides
-#     - n missing sides
-#     - missing corners?
-#   - update platform
-#     - merge upstream
-#     - use platform state
-#     - use keys?
+# someday:
+# - vary the obstacle shapes
+#   - n sides
+#   - n missing sides
+#   - missing corners?
+# - update platform
+#   - merge upstream
+#   - use platform state
+#   - use keys? for pause?
 
 main = { init, render }
 
@@ -40,8 +36,10 @@ Model : {
     spawnedPolygons : List SpawnedPolygon,
     playerRotation : F32,
     playerRadius : F32,
-    beat : F32,
     bpm : F32,
+    beat : F32,
+    beatDirection : [Up, Down],
+    score : U64,
 }
 
 # frames per second
@@ -76,8 +74,10 @@ init =
         spawnedPolygons: [],
         playerRotation: -(Num.pi / 2),
         playerRadius: initialPlayerRadius,
-        beat: 0.0,
         bpm: initialBpm,
+        beat: 0.0,
+        beatDirection: Up,
+        score: 0,
     }
 
 initialPlayerRadius = 80.0
@@ -95,7 +95,7 @@ render = \model ->
             Playing -> update { model, frameCount, mouse }
             GameOver -> model
 
-    draw! (modelToWorld newModel)
+    draw! (drawModel newModel)
 
     Task.ok newModel
 
@@ -113,6 +113,11 @@ update = \{ model, frameCount, mouse } ->
         bps = model.bpm / 60
         wave = Num.sin (secondsRadians * bps)
         if wave < -2 / 3 then -1.0 else wave
+    beatDirection = if beat > model.beat then Up else Down
+    score =
+        when (beatDirection, model.beatDirection) is
+            (Up, Down) -> model.score + 1
+            _ -> model.score
 
     (spawnTimer, spawn) =
         tickedTimer = model.spawnTimer + deltaFrames
@@ -160,8 +165,8 @@ update = \{ model, frameCount, mouse } ->
     playerRadius = initialPlayerRadius
     playerRotation = model.playerRotation + (intent * playerSpeed * Num.tau)
 
-    worldModel : Model
-    worldModel = {
+    newModel : Model
+    newModel = {
         screen: model.screen,
         width: model.width,
         height: model.height,
@@ -173,9 +178,11 @@ update = \{ model, frameCount, mouse } ->
         playerRotation,
         playerRadius,
         beat,
+        beatDirection,
+        score,
     }
 
-    updateCollision worldModel
+    updateCollision newModel
 
 clamp : F32, { min : F32, max : F32 } -> F32
 clamp = \n, { min, max } ->
@@ -223,12 +230,34 @@ checkCollision = \{ playerLines, obstacleLines } ->
 DrawModel : {
     player : Polygon,
     obstacles : List { start : Vector2, end : Vector2, color : Raylib.Color },
+    score : U64,
+    beat : F32,
 }
 
 draw : DrawModel -> Task {} {}
-draw = \world ->
-    Task.forEach! world.obstacles Raylib.drawLine
-    Polygon.draw! world.player
+draw = \model ->
+    Task.forEach! model.obstacles Raylib.drawLine
+    Polygon.draw! model.player
+    drawScore! model
+
+drawScore : DrawModel -> Task {} {}
+drawScore = \model ->
+    textSizeModifier = (model.score // 4) |> Num.toI32
+    textSizeMultiplier = Num.toFrac (model.score // 16) * 0.2 + 1
+
+    textBeat = (-model.beat + 1) * 0.5
+    textSizeBeatModifier = 2 * Num.toFrac (model.score // 4) * textBeat
+
+    size =
+        (20 + textSizeModifier)
+        |> Num.toFrac
+        |> Num.mul textSizeMultiplier
+        |> Num.add textSizeBeatModifier
+        |> Num.floor
+
+    text = Num.toStr (model.score + 1)
+
+    Raylib.drawText! { text, size, x: 50, y: 50, color: White }
 
 newPentagon : Vector2 -> Polygon
 newPentagon = \center -> {
@@ -293,21 +322,23 @@ updatePolygon = \spawnedPolygon, { bpm, deltaFrames } ->
     else
         Ok { spawnedPolygon & polygon: newPolygon, age: newAge }
 
-PhysicsSlice model : {
+DrawSlice model : {
     beat : F32,
     center : Vector2,
     playerRotation : F32,
     playerRadius : F32,
     spawnedPolygons : List SpawnedPolygon,
+    score : U64,
 }model
 
-modelToWorld : PhysicsSlice m -> DrawModel
-modelToWorld = \model ->
+drawModel : DrawSlice m -> DrawModel
+drawModel = \model ->
     player = playerPolygon model
     obstacles = List.joinMap model.spawnedPolygons \sp ->
         lines = nonGapLines sp
         List.map lines \(start, end) -> { start, end, color: sp.polygon.color }
-    { player, obstacles }
+
+    { player, obstacles, score: model.score, beat: model.beat }
 
 PlayerSlice model : {
     beat : F32,

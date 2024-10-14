@@ -1,4 +1,9 @@
-module [draw, Polygon, edges, verticies]
+module [
+    Polygon,
+    draw,
+    edges,
+    verticies,
+]
 
 import raylib.Raylib exposing [Vector2]
 import Polygon.Sides as Sides exposing [Sides]
