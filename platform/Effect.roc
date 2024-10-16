@@ -8,22 +8,24 @@ hosted Effect
         measureText,
         setWindowTitle,
         setBackgroundColor,
-
         drawLine,
         drawRectangle,
         drawRectangleGradient,
         drawCircle,
         drawCircleGradient,
-
         guiWindowBox,
         getMousePosition,
-
         MouseButtons,
         mouseButtons,
-
         setTargetFPS,
         setDrawFPS,
-        getFrameCount,
+        takeScreenshot,
+        createCamera,
+        updateCamera,
+        beginMode2D,
+        endMode2D,
+        log,
+        toLogLevel,
     ]
     imports []
 
@@ -31,6 +33,20 @@ setWindowSize : I32, I32 -> Task {} {}
 getScreenSize : Task { height : I32, width : I32, z : I64 } {}
 drawGuiButton : F32, F32, F32, F32, Str -> Task I64 {}
 exit : Task {} {}
+
+toLogLevel : _ -> I32
+toLogLevel = \level ->
+    when level is
+        LogAll -> 0
+        LogTrace -> 1
+        LogDebug -> 2
+        LogInfo -> 3
+        LogWarning -> 4
+        LogError -> 5
+        LogFatal -> 6
+        LogNone -> 7
+
+log : Str, I32 -> Task {} {}
 
 drawText : F32, F32, I32, Str, U8, U8, U8, U8 -> Task {} {}
 measureText : Str, I32 -> Task I64 {}
@@ -63,4 +79,11 @@ mouseButtons : Task MouseButtons {}
 
 setTargetFPS : I32 -> Task {} {}
 setDrawFPS : Bool, F32, F32 -> Task {} {}
-getFrameCount : Task I64 {}
+
+takeScreenshot : Str -> Task {} {}
+
+createCamera : F32, F32, F32, F32, F32, F32 -> Task U64 {}
+updateCamera : U64, F32, F32, F32, F32, F32, F32 -> Task {} {}
+
+beginMode2D : U64 -> Task {} {}
+endMode2D : U64 -> Task {} {}

@@ -1,8 +1,12 @@
 module [
     Program,
+    PlatformState,
+    KeyboardKey,
+    MouseButton,
     Color,
     Rectangle,
     Vector2,
+    Camera,
     setWindowSize,
     getScreenSize,
     setBackgroundColor,
@@ -10,12 +14,8 @@ module [
     setWindowTitle,
     drawRectangle,
     getMousePosition,
-    MouseButtons,
-    mouseButtons,
     setTargetFPS,
     setDrawFPS,
-    getFrameCount,
-
     measureText,
     drawText,
     drawLine,
@@ -24,9 +24,16 @@ module [
     drawCircle,
     drawCircleGradient,
     rgba,
+    takeScreenshot,
+    createCamera,
+    updateCamera,
+    drawMode2D,
+    log,
 ]
 
 import Effect
+import InternalKeyboard
+import InternalMouse
 
 ## Provide an initial state and a render function to the platform.
 ## ```
@@ -35,10 +42,22 @@ import Effect
 ##     render : state -> Task state {},
 ## }
 ## ```
-Program state : {
-    init : Task state {},
-    render : state -> Task state {},
+Program state err : {
+    init : Task state err,
+    render : state, PlatformState -> Task state err,
+} where err implements Inspect
+
+PlatformState : {
+    timestampMillis : U64,
+    frameCount : U64,
+    keyboardButtons : Set KeyboardKey,
+    mouseButtons : Set MouseButton,
+    mousePos : Vector2,
 }
+
+KeyboardKey : InternalKeyboard.KeyboardKey
+
+MouseButton : InternalMouse.MouseButton
 
 ## Represents a rectangle.
 ## ```
@@ -101,6 +120,16 @@ rgba = \color ->
 exit : Task {} *
 exit = Effect.exit |> Task.mapErr \{} -> crash "unreachable exit"
 
+## Show a Raylib log trace message.
+##
+## ```
+## Raylib.log! "Not yet implemented" LogError
+## ```
+log : Str, [LogAll, LogTrace, LogDebug, LogInfo, LogWarning, LogError, LogFatal, LogNone] -> Task {} *
+log = \message, level ->
+    Effect.log message (Effect.toLogLevel level)
+    |> Task.mapErr \{} -> crash "unreachable log"
+
 ## Set the window title.
 setWindowTitle : Str -> Task {} *
 setWindowTitle = \title ->
@@ -129,52 +158,6 @@ getMousePosition =
 
     Task.ok { x, y }
 
-## Represents the state of the mouse buttons.
-## ```
-## MouseButtons : {
-##     back: Bool,
-##     left: Bool,
-##     right: Bool,
-##     middle: Bool,
-##     side: Bool,
-##     extra: Bool,
-##     forward: Bool,
-## }
-## ```
-MouseButtons : {
-    back : Bool,
-    left : Bool,
-    right : Bool,
-    middle : Bool,
-    side : Bool,
-    extra : Bool,
-    forward : Bool,
-}
-
-## Get the current state of the mouse buttons.
-##
-## Here is an example checking if the left and right mouse buttons are currently pressed:
-## ```
-## { left, right } = Raylib.mouseButtons!
-## ```
-mouseButtons : Task MouseButtons *
-mouseButtons =
-    # note we are unpacking and repacking the mouseButtons here as a workaround for
-    # https://github.com/roc-lang/roc/issues/7142
-    { back, left, right, middle, side, extra, forward } =
-        Effect.mouseButtons
-            |> Task.mapErr! \{} -> crash "unreachable mouseButtons"
-
-    Task.ok {
-        back,
-        left,
-        right,
-        middle,
-        side,
-        extra,
-        forward,
-    }
-
 ## Set the target frames per second. The default value is 60.
 setTargetFPS : I32 -> Task {} *
 setTargetFPS = \fps -> Effect.setTargetFPS fps |> Task.mapErr \{} -> crash "unreachable setTargetFPS"
@@ -194,13 +177,6 @@ setDrawFPS = \{ fps, posX ? 10, posY ? 10 } ->
 
     Effect.setDrawFPS showFps posX posY
     |> Task.mapErr \{} -> crash "unreachable setDrawFPS"
-
-## Get the number of frames that have been drawn since the program started.
-getFrameCount : Task I64 *
-getFrameCount =
-    Effect.getFrameCount
-    |> Task.mapErr \{} -> crash "unreachable getFrameCount"
-
 
 ## Set the background color to clear the window between each frame.
 setBackgroundColor : Color -> Task {} *
@@ -271,3 +247,45 @@ drawCircleGradient = \{ x, y, radius, inner, outer } ->
 
     Effect.drawCircleGradient x y radius ic.r ic.g ic.b ic.a oc.r oc.g oc.b oc.a
     |> Task.mapErr \{} -> crash "unreachable drawCircleGradient"
+
+## Takes a screenshot of current screen (filename extension defines format)
+## ```
+## Raylib.takeScreenshot! "screenshot.png"
+## ```
+takeScreenshot : Str -> Task {} *
+takeScreenshot = \filename ->
+    Effect.takeScreenshot filename
+    |> Task.mapErr \{} -> crash "unreachable takeScreenshot"
+
+Camera := U64
+
+createCamera : { target : Vector2, offset : Vector2, rotation : F32, zoom : F32 } -> Task Camera *
+createCamera = \{ target, offset, rotation, zoom } ->
+    Effect.createCamera target.x target.y offset.x offset.y rotation zoom
+    |> Task.map \camera -> @Camera camera
+    |> Task.mapErr \{} -> crash "unreachable createCamera"
+
+updateCamera : Camera, { target : Vector2, offset : Vector2, rotation : F32, zoom : F32 } -> Task {} *
+updateCamera = \@Camera camera, { target, offset, rotation, zoom } ->
+    Effect.updateCamera camera target.x target.y offset.x offset.y rotation zoom
+    |> Task.mapErr \{} -> crash "unreachable updateCamera"
+
+drawMode2D : Camera, Task {} err -> Task {} err
+drawMode2D = \@Camera camera, drawTask ->
+
+    Effect.beginMode2D camera
+        |> Task.mapErr! \{} -> crash "unreachable beginMode2D"
+
+    Task.attempt drawTask \result ->
+        when result is
+            Ok {} ->
+                Effect.endMode2D camera
+                    |> Task.mapErr! \{} -> crash "unreachable endMode2D"
+
+                Task.ok {}
+
+            Err err ->
+                Effect.endMode2D camera
+                    |> Task.mapErr! \{} -> crash "unreachable endMode2D"
+
+                Task.err err
