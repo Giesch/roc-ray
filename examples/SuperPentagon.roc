@@ -2,7 +2,7 @@ app [main, Model] {
     ray: platform "../platform/main.roc",
 }
 
-import ray.Raylib exposing [Vector2]
+import ray.Raylib exposing [PlatformState, Vector2]
 
 import SuperPentagon.Polygon.Sides as Sides
 import SuperPentagon.Polygon as Polygon exposing [Polygon]
@@ -30,8 +30,8 @@ main = { init, render }
 Model : {
     screen : [Playing, GameOver GameOverModel],
     center : Vector2,
-    frameCount : I64,
-    spawnTimer : I64,
+    frameCount : U64,
+    spawnTimer : U64,
     obstacles : List Obstacle,
     playerRotation : F32,
     playerRadius : F32,
@@ -83,24 +83,22 @@ initialPlayerRadius = 80.0
 # spawn a new polygon every n frames
 spawnRate = 300
 
-render : Model -> Task Model {}
-render = \model ->
-    frameCount = Raylib.getFrameCount!
-    mouse = Raylib.getMousePosition!
-    mouseButtons = Raylib.mouseButtons!
-    click = if mouseButtons.left then LeftClick else None
+render : Model, PlatformState -> Task Model {}
+render = \model, { frameCount, mouseButtons, mousePos } ->
+    click = if Set.contains mouseButtons MouseButtonLeft then LeftClick else None
 
     newModel =
         when model.screen is
-            Playing -> update { model, frameCount, mouse }
+            Playing -> update { model, frameCount, mousePos }
             GameOver gameOver -> gameOverUpdate model gameOver click
 
     draw! (drawModel newModel)
 
     Task.ok newModel
 
-update : { model : Model, frameCount : I64, mouse : Vector2 } -> Model
-update = \{ model, frameCount, mouse } ->
+update : { model : Model, frameCount : U64, mousePos : Vector2 } -> Model
+update = \{ model, frameCount, mousePos } ->
+    mouse = mousePos
     # In practice, this is 0 once and then 1 forever;
     # it's supposed to be a stand-in for deltaTime
     deltaFrames = frameCount - model.frameCount
@@ -303,7 +301,7 @@ pentagonObstacle = \center ->
     gaps = [2, 4]
     Obstacle.new { polygon, gaps }
 
-updateObstacle : Obstacle, { bpm : F32, deltaFrames : I64 } -> Result Obstacle [Despawn]
+updateObstacle : Obstacle, { bpm : F32, deltaFrames : U64 } -> Result Obstacle [Despawn]
 updateObstacle = \obstacle, { bpm, deltaFrames } ->
     age = Obstacle.age obstacle
     newAge = age + deltaFrames

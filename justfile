@@ -7,6 +7,7 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 list:
     just --list --unsorted
 
+
 # install zig with winget and download roc binary to ./windows/bin/
 [windows]
 setup:
@@ -15,15 +16,15 @@ setup:
 
 # build and run the executable
 [windows]
-dev app="examples/SuperPentagon.roc":
-    $env:path = "$(pwd)\windows\bin;$($env:path)"; zig.exe build --release=fast -Dapp="{{app}}"
-    .\zig-out\bin\rocray.exe
+dev app="examples/SuperPentagon.roc": check
+    $env:path = "$(pwd)\windows\bin;$($env:path)"; roc build --no-link --output app.lib {{app}}
+    cargo run
 
 # build and run the executable
 [linux]
-dev app="examples/SuperPentagon.roc":
-    zig build --release=fast -Dapp="{{app}}"
-    ./zig-out/bin/rocray
+dev app="examples/SuperPentagon.roc": check
+    roc build --no-link --output app.o {{app}}
+    cargo run
 
 
 # clean build artifacts
@@ -47,9 +48,9 @@ check app="examples/SuperPentagon.roc":
 
 
 [windows]
-format app="examples/SuperPentagon.roc":
-    $env:path = "$(pwd)\windows\bin;$($env:path)"; roc format {{app}}
+format file:
+    $env:path = "$(pwd)\windows\bin;$($env:path)"; roc format {{file}}
 
 [linux]
-format app="examples/SuperPentagon.roc":
-    roc format {{app}}
+format file:
+    roc format {{file}}

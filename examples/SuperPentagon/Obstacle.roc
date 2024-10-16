@@ -16,7 +16,7 @@ import SuperPentagon.Polygon as Polygon exposing [Polygon]
 # a moving polygon with gaps in it
 Obstacle := {
     # frames since spawn
-    age : I64,
+    age : U64,
 
     # indexes of the edges to leave out of the polygon
     gaps : List U64,
@@ -33,10 +33,10 @@ updatePolygon : Obstacle, (Polygon -> Polygon) -> Obstacle
 updatePolygon = \@Obstacle obstacle, update ->
     @Obstacle { obstacle & polygon: update obstacle.polygon }
 
-setAge : Obstacle, I64 -> Obstacle
+setAge : Obstacle, U64 -> Obstacle
 setAge = \@Obstacle obstacle, newAge -> @Obstacle { obstacle & age: newAge }
 
-age : Obstacle -> I64
+age : Obstacle -> U64
 age = \@Obstacle obstacle -> obstacle.age
 
 color : Obstacle -> Raylib.Color
