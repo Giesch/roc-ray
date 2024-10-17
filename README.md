@@ -1,6 +1,6 @@
-# roc-raylib
+# Roc Ray Graphics Platform
 
-Roc platform for graphics and GUI using [rust](https://www.rust-lang.org) and [raylib](https://www.raylib.com)
+[Roc](https://www.roc-lang.org) platform for building graphics applications, like games and simulations, using the [Raylib](https://www.raylib.com) graphics library.
 
 ## Documentation
 
@@ -8,33 +8,34 @@ Checkout the docs site at [lukewilliamboswell.github.io/roc-ray](https://lukewil
 
 ## Example
 
+(requires cloning the repo locally)
 ```roc
 app [main, Model] { ray: platform "../platform/main.roc" }
 
-import ray.Raylib
+import ray.RocRay
 
-width = 800f32
-height = 600f32
+width = 800
+height = 600
 
 Model : {}
 
-main : Raylib.Program Model []
+main : RocRay.Program Model []
 main = { init, render }
 
 init =
 
-    Raylib.setWindowSize! { width, height }
-    Raylib.setWindowTitle! "Basic Shapes"
+    RocRay.setWindowSize! { width, height }
+    RocRay.setWindowTitle! "Basic Shapes"
 
     Task.ok {}
 
 render = \_, _ ->
 
-    Raylib.drawText! { text: "Hello World", x: 300, y: 50, size: 40, color: Navy }
-    Raylib.drawRectangle! { x: 100, y: 150, width: 250, height: 100, color: Aqua }
-    Raylib.drawRectangleGradient! { x: 400, y: 150, width: 250, height: 100, top: Lime, bottom: Green }
-    Raylib.drawCircle! { x: 200, y: 400, radius: 75, color: Fuchsia }
-    Raylib.drawCircleGradient! { x: 600, y: 400, radius: 75, inner: Yellow, outer: Maroon }
+    RocRay.drawText! { text: "Hello World", x: 300, y: 50, size: 40, color: Navy }
+    RocRay.drawRectangle! { x: 100, y: 150, width: 250, height: 100, color: Aqua }
+    RocRay.drawRectangleGradient! { x: 400, y: 150, width: 250, height: 100, top: Lime, bottom: Green }
+    RocRay.drawCircle! { x: 200, y: 400, radius: 75, color: Fuchsia }
+    RocRay.drawCircleGradient! { x: 600, y: 400, radius: 75, inner: Yellow, outer: Maroon }
 
     Task.ok {}
 ```
@@ -43,24 +44,26 @@ render = \_, _ ->
 
 ## Building and Run
 
-### Linux and MacOS - Nix Package Manager
+### Linux and MacOS
 
-Using nix package manager to setup a development environment with roc and zig
+*Required dependencies*
+1. Install [roc](https://www.roc-lang.org)
+2. Install [rust](https://www.rust-lang.org/tools/install)
+3. Install dev tools on linux `sudo apt install build-essential git` or on macOS `xcode-select --install`
 
-```
-$ nix develop
-```
-
-Run an example
+Run an example:
 
 ```
 $ ./build-and-run.sh examples/pong.roc
 ```
 
-**Running the tests locally**
+**OR**
+
+Use the [nix package manager](https://nixos.org/download/) to install the dependencies
 
 ```
-$ ./ci/all_tests.sh
+$ nix develop
+$ ./build-and-run.sh examples/pong.roc
 ```
 
 ### Windows
@@ -78,4 +81,12 @@ Run an example
 
 ```
 PS > .\build-and-run.ps1 examples\pong.roc
+```
+
+## Contributing
+
+To run the tests locally:
+
+```
+$ ./ci/all_tests.sh
 ```

@@ -13,7 +13,6 @@ module [
     exit,
     setWindowTitle,
     drawRectangle,
-    getMousePosition,
     setTargetFPS,
     setDrawFPS,
     measureText,
@@ -149,15 +148,6 @@ getScreenSize =
     |> Task.map \{ width, height } -> { width: Num.toFrac width, height: Num.toFrac height }
     |> Task.mapErr \{} -> crash "unreachable getScreenSize"
 
-## Get the current mouse position.
-getMousePosition : Task Vector2 *
-getMousePosition =
-    { x, y } =
-        Effect.getMousePosition
-            |> Task.mapErr! \{} -> crash "unreachable getMousePosition"
-
-    Task.ok { x, y }
-
 ## Set the target frames per second. The default value is 60.
 setTargetFPS : I32 -> Task {} *
 setTargetFPS = \fps -> Effect.setTargetFPS fps |> Task.mapErr \{} -> crash "unreachable setTargetFPS"
@@ -167,7 +157,7 @@ setTargetFPS = \fps -> Effect.setTargetFPS fps |> Task.mapErr \{} -> crash "unre
 ## ```
 ## Raylib.setDrawFPS! { fps: Visible, posX: 10, posY: 10 }
 ## ```
-setDrawFPS : { fps : [Visible, Hidden], posX ? F32, posY ? F32 } -> Task {} *
+setDrawFPS : { fps : [Visible, Hidden], posX ? I32, posY ? I32 } -> Task {} *
 setDrawFPS = \{ fps, posX ? 10, posY ? 10 } ->
 
     showFps =
