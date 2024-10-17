@@ -16,13 +16,14 @@ setup:
 
 # build and run the executable
 [windows]
-dev app="examples/SuperPentagon.roc": check
+dev app="examples/SuperPentagon.roc":
     $env:path = "$(pwd)\windows\bin;$($env:path)"; roc build --no-link --output app.lib {{app}}
     cargo run
 
 # build and run the executable
 [linux]
-dev app="examples/SuperPentagon.roc": check
+dev app="examples/SuperPentagon.roc":
+    roc check {{app}}
     roc build --no-link --output app.o {{app}}
     cargo run
 

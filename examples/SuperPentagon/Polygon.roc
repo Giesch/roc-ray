@@ -6,14 +6,14 @@ module [
     verticies,
 ]
 
-import ray.Raylib exposing [Vector2]
+import ray.RocRay exposing [Color, Vector2]
 
 import SuperPentagon.Polygon.Sides as Sides exposing [Sides]
 
 Polygon : {
     sides : Sides,
     rotation : F32,
-    color : Raylib.Color,
+    color : Color,
     radius : F32,
     center : Vector2,
 }
@@ -21,7 +21,7 @@ Polygon : {
 draw : Polygon -> Task {} {}
 draw = \polygon ->
     Task.forEach (edges polygon) \(start, end) ->
-        Raylib.drawLine! { start, end, color: polygon.color }
+        RocRay.drawLine! { start, end, color: polygon.color }
 
 edges : Polygon -> List (Vector2, Vector2)
 edges = \polygon ->
@@ -34,7 +34,7 @@ edges = \polygon ->
 
     (slidingPairs corners) |> List.append lastSide
 
-lines : Polygon -> List { start : Vector2, end : Vector2, color : Raylib.Color }
+lines : Polygon -> List { start : Vector2, end : Vector2, color : Color }
 lines = \polygon ->
     List.map (edges polygon) \(start, end) ->
         { start, end, color: polygon.color }

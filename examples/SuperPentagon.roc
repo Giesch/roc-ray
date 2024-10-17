@@ -2,7 +2,7 @@ app [main, Model] {
     ray: platform "../platform/main.roc",
 }
 
-import ray.Raylib exposing [PlatformState, Vector2]
+import ray.RocRay exposing [Color, PlatformState, Vector2]
 
 import SuperPentagon.Polygon.Sides as Sides
 import SuperPentagon.Polygon as Polygon exposing [Polygon]
@@ -54,9 +54,9 @@ initialObstacleRadius = windowHeight * 0.9
 
 init : Task Model {}
 init =
-    Raylib.setWindowSize! { width: windowWidth, height: windowHeight }
-    Raylib.setWindowTitle! "Super Pentagon"
-    Raylib.setTargetFPS! fps
+    RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
+    RocRay.setWindowTitle! "Super Pentagon"
+    RocRay.setTargetFPS! fps
 
     Task.ok newGame
 
@@ -240,14 +240,14 @@ drawModel = \model ->
 DrawModel : {
     screen : [Playing, GameOver GameOverModel],
     player : Polygon,
-    obstacleLines : List { start : Vector2, end : Vector2, color : Raylib.Color },
+    obstacleLines : List { start : Vector2, end : Vector2, color : Color },
     score : U64,
     beat : F32,
 }
 
 draw : DrawModel -> Task {} {}
 draw = \model ->
-    Task.forEach! model.obstacleLines Raylib.drawLine
+    Task.forEach! model.obstacleLines RocRay.drawLine
 
     player = model.player
     playerColor =
@@ -277,7 +277,7 @@ drawScore = \model ->
     text = Num.toStr (model.score + 1)
     drawScoreNumber = \{ offset } ->
         margin = 50
-        Raylib.drawText! { text, size, x: margin + offset, y: margin, color: White }
+        RocRay.drawText! { text, size, x: margin + offset, y: margin, color: White }
 
     when model.screen is
         Playing -> drawScoreNumber { offset: 0 }
@@ -286,8 +286,9 @@ drawScore = \model ->
                 Drifting offset -> drawScoreNumber { offset }
                 OfferRestart -> drawRestart
 
+drawRestart : Task {} _
 drawRestart =
-    Raylib.drawText { text: "Restart?", size: 30, x: 600, y: 400, color: White }
+    RocRay.drawText { text: "Restart?", size: 30, x: 600, y: 400, color: White }
 
 pentagonObstacle : Vector2 -> Obstacle
 pentagonObstacle = \center ->

@@ -9,7 +9,7 @@ module [
     updatePolygon,
 ]
 
-import ray.Raylib exposing [Vector2]
+import ray.RocRay exposing [Color, Vector2]
 
 import SuperPentagon.Polygon as Polygon exposing [Polygon]
 
@@ -39,10 +39,10 @@ setAge = \@Obstacle obstacle, newAge -> @Obstacle { obstacle & age: newAge }
 age : Obstacle -> U64
 age = \@Obstacle obstacle -> obstacle.age
 
-color : Obstacle -> Raylib.Color
+color : Obstacle -> Color
 color = \@Obstacle obstacle -> obstacle.polygon.color
 
-lines : Obstacle -> List { start : Vector2, end : Vector2, color : Raylib.Color }
+lines : Obstacle -> List { start : Vector2, end : Vector2, color : Color }
 lines = \@Obstacle obstacle ->
     allEdges = Polygon.edges obstacle.polygon
 
