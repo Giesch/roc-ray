@@ -17,7 +17,7 @@ setup:
 # build and run the executable
 [windows]
 dev app="examples/SuperPentagon.roc":
-    $env:path = "$(pwd)\windows\bin;$($env:path)"; roc build --no-link --output app.lib {{app}}
+    .\windows\bin\roc.exe build --no-link --output app.obj {{app}}
     cargo run
 
 # build and run the executable
@@ -31,7 +31,7 @@ dev app="examples/SuperPentagon.roc":
 # clean build artifacts
 [windows]
 clean:
-    git clean -dfx -e windows\bin
+    git clean -dfx -e windows/**/*.exe
 
 # clean build artifacts
 [linux]
@@ -41,7 +41,7 @@ clean:
 
 [windows]
 check app="examples/SuperPentagon.roc":
-    $env:path = "$(pwd)\windows\bin;$($env:path)"; roc check {{app}}
+    .\windows\bin\roc.exe check {{app}}
 
 [linux]
 check app="examples/SuperPentagon.roc":
@@ -50,7 +50,7 @@ check app="examples/SuperPentagon.roc":
 
 [windows]
 format file:
-    $env:path = "$(pwd)\windows\bin;$($env:path)"; roc format {{file}}
+    .\windows\bin\roc.exe format {{file}}
 
 [linux]
 format file:
