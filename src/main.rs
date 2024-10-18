@@ -1,7 +1,7 @@
 use roc_std::{RocBox, RocList, RocResult, RocStr};
 use roc_std_heap::ThreadSafeRefcountedResourceHeap;
 use std::array;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::ffi::{c_int, CString};
 use std::time::SystemTime;
 
@@ -11,6 +11,7 @@ mod roc;
 thread_local! {
     static DRAW_FPS: Cell<Option<(i32, i32)>> = const { Cell::new(None) };
     static SHOULD_EXIT: Cell<bool> = const { Cell::new(false) };
+    static SOUNDS: RefCell<Vec<bindings::Sound>> = const { RefCell::new(vec![]) }
 }
 
 fn main() {
@@ -408,4 +409,27 @@ unsafe fn get_keys_states() -> RocList<u8> {
     });
 
     RocList::from_slice(&keys)
+}
+
+#[no_mangle]
+unsafe extern "C" fn roc_fx_loadSound(path: RocStr) -> RocResult<u32, ()> {
+    let path = CString::new(path.to_string()).unwrap();
+    let sound = bindings::LoadSound(path.into_raw());
+
+    let sound_id = SOUNDS.with_borrow_mut(|sounds| {
+        sounds.push(sound);
+        sounds.len()
+    });
+
+    RocResult::ok(sound_id as u32)
+}
+
+#[no_mangle]
+unsafe extern "C" fn roc_fx_playSound(sound_id: u32) -> RocResult<(), ()> {
+    SOUNDS.with_borrow_mut(|sounds| {
+        let sound = sounds[sound_id as usize];
+        bindings::PlaySound(sound);
+    });
+
+    RocResult::ok(())
 }
