@@ -3,6 +3,7 @@ app [main, Model] {
 }
 
 import ray.RocRay exposing [Color, PlatformState, Vector2]
+import ray.RocRay.Mouse as Mouse
 
 import SuperPentagon.Polygon.Sides as Sides
 import SuperPentagon.Polygon as Polygon exposing [Polygon]
@@ -39,6 +40,7 @@ Model : {
     beat : F32,
     beatDirection : [Up, Down],
     score : U64,
+    timestampMillis : U64,
 }
 
 # frames per second
@@ -76,32 +78,37 @@ newGame =
         beat: 0.0,
         beatDirection: Up,
         score: 0,
+        timestampMillis: 0,
     }
 
 initialPlayerRadius = 80.0
 
-# spawn a new polygon every n frames
-spawnRate = 300
+# spawn a new polygon every n millis
+spawnRate = 5000
 
 render : Model, PlatformState -> Task Model {}
-render = \model, { frameCount, mouseButtons, mousePos } ->
-    click = if Set.contains mouseButtons MouseButtonLeft then LeftClick else None
-
+render = \model, { frameCount, mouse, timestampMillis } ->
     newModel =
         when model.screen is
-            Playing -> update { model, frameCount, mousePos }
-            GameOver gameOver -> gameOverUpdate model gameOver click
+            Playing -> update { model, frameCount, mouse, timestampMillis }
+            GameOver gameOver ->
+                leftMouse = mouse.buttons.left
+                gameOverUpdate model gameOver { leftMouse, timestampMillis }
 
     draw! (drawModel newModel)
 
     Task.ok newModel
 
-update : { model : Model, frameCount : U64, mousePos : Vector2 } -> Model
-update = \{ model, frameCount, mousePos } ->
-    mouse = mousePos
-    # In practice, this is 0 once and then 1 forever;
-    # it's supposed to be a stand-in for deltaTime
-    deltaFrames = frameCount - model.frameCount
+update :
+    {
+        model : Model,
+        frameCount : U64,
+        mouse : { position : Vector2 }m,
+        timestampMillis : U64,
+    }
+    -> Model
+update = \{ model, frameCount, mouse, timestampMillis } ->
+    deltaMillis = timestampMillis - model.timestampMillis
 
     # a tweaked sine wave added to objects' size & position
     # ranges from 1.0 to -1.0
@@ -118,7 +125,7 @@ update = \{ model, frameCount, mousePos } ->
             _ -> model.score
 
     (spawnTimer, spawn) =
-        tickedTimer = model.spawnTimer + deltaFrames
+        tickedTimer = model.spawnTimer + deltaMillis
         if tickedTimer > spawnRate then
             (tickedTimer % spawnRate, SpawnPentagon)
         else
@@ -134,7 +141,7 @@ update = \{ model, frameCount, mousePos } ->
 
         updateAndDespawn = \oldObstacles ->
             List.keepOks oldObstacles \obs ->
-                updateObstacle obs { deltaFrames, bpm: model.bpm }
+                updateObstacle obs { deltaMillis, bpm: model.bpm }
 
         addBeatToPolygon = \polygon ->
             { polygon & radius: polygon.radius + beat * 10.0 }
@@ -155,7 +162,7 @@ update = \{ model, frameCount, mousePos } ->
         # mouse.x
         # |> clamp { min, max }
         # |> \clamped -> (clamped - mid) / intentRange
-        clamped = clamp mouse.x { min, max }
+        clamped = clamp mouse.position.x { min, max }
         (clamped - mid) / intentRange
 
     playerSpeed = 2 / 360
@@ -175,6 +182,7 @@ update = \{ model, frameCount, mousePos } ->
         beat,
         beatDirection,
         score,
+        timestampMillis,
     }
 
     updateCollision newModel
@@ -302,16 +310,17 @@ pentagonObstacle = \center ->
     gaps = [2, 4]
     Obstacle.new { polygon, gaps }
 
-updateObstacle : Obstacle, { bpm : F32, deltaFrames : U64 } -> Result Obstacle [Despawn]
-updateObstacle = \obstacle, { bpm, deltaFrames } ->
+updateObstacle : Obstacle, { bpm : F32, deltaMillis : U64 } -> Result Obstacle [Despawn]
+updateObstacle = \obstacle, { bpm, deltaMillis } ->
     age = Obstacle.age obstacle
-    newAge = age + deltaFrames
+    newAge = age + deltaMillis
 
-    rotationDegrees = (bpm / 120) * Num.toF32 newAge
+    ageSeconds = Num.toF32 newAge / 1000
+    rotationDegrees = bpm * ageSeconds / 2
     rotation = (rotationDegrees / 360) * Num.tau
 
     radius =
-        granularity = 600
+        granularity = 10_000
         num =
             newAge
             |> Num.rem granularity
@@ -361,16 +370,17 @@ GameOverModel : {
     animation : [Drifting F32, OfferRestart],
 }
 
-gameOverUpdate : Model, GameOverModel, [LeftClick]* -> Model
-gameOverUpdate = \model, gameOver, click ->
-    age = gameOver.age + 1
-    offset = Num.toFrac age * 2
+gameOverUpdate : Model, GameOverModel, { timestampMillis : U64, leftMouse : Mouse.ButtonState } -> Model
+gameOverUpdate = \model, gameOver, { timestampMillis, leftMouse } ->
+    deltaMillis = timestampMillis - model.timestampMillis
+    age = gameOver.age + deltaMillis
+    offset = (Num.toF32 age * 60 / 1000) * 2
     animation =
         if offset < windowWidth then
             Drifting offset
         else
             OfferRestart
 
-    when (animation, click) is
-        (OfferRestart, LeftClick) -> newGame
-        _ -> { model & screen: GameOver { age, animation } }
+    when (animation, leftMouse) is
+        (OfferRestart, Pressed) -> newGame
+        _ -> { model & timestampMillis, screen: GameOver { age, animation } }
