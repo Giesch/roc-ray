@@ -6,15 +6,17 @@ platform "roc-ray"
     provides [forHost]
 
 import RocRay exposing [Program]
+import RocRay.Mouse as Mouse
+import RocRay.Keys as Keys
 import InternalKeyboard
 import InternalMouse
 import Effect
 
 PlatformStateFromHost : {
-    timestampMillis : U64,
     frameCount : U64,
-    keysDownU64 : List U64,
-    mouseDownU64 : List U64,
+    keys : List U8,
+    mouseButtons : List U8,
+    timestampMillis : U64,
     mousePosX : F32,
     mousePosY : F32,
 }
@@ -39,23 +41,18 @@ init =
 
 render : Box Model, PlatformStateFromHost -> Task (Box Model) {}
 render = \boxedModel, platformState ->
-
     model = Box.unbox boxedModel
 
-    { timestampMillis, frameCount, keysDownU64, mouseDownU64, mousePosX, mousePosY } = platformState
-
-    keyboardButtons = keysDownU64 |> List.map InternalKeyboard.keyFromU64 |> Set.fromList
-    mouseButtons = mouseDownU64 |> List.map InternalMouse.mouseButtonFromU64 |> Set.fromList
+    { timestampMillis, frameCount, keys, mouseButtons, mousePosX, mousePosY } = platformState
 
     state : RocRay.PlatformState
     state = {
         timestampMillis,
         frameCount,
-        keyboardButtons,
-        mouseButtons,
-        mousePos: {
-            x: mousePosX,
-            y: mousePosY,
+        keys: keysForApp { keys },
+        mouse: {
+            position: { x: mousePosX, y: mousePosY },
+            buttons: mouseButtonsForApp { mouseButtons },
         },
     }
 
@@ -66,3 +63,36 @@ render = \boxedModel, platformState ->
                 Effect.log! (Inspect.toStr err) (Effect.toLogLevel LogError)
                 Effect.exit!
                 Task.err {}
+
+keysForApp : { keys : List U8 } -> Keys.Keys
+keysForApp = \{ keys } ->
+    keys
+    |> List.map InternalKeyboard.keyStateFromU8
+    |> List.mapWithIndex \s, i -> (InternalKeyboard.keyFromU64 i, s)
+    |> List.keepOks \(recognized, s) ->
+        Result.map recognized \key -> (key, s)
+    |> Dict.fromList
+
+mouseButtonsForApp : { mouseButtons : List U8 } -> Mouse.Buttons
+mouseButtonsForApp = \{ mouseButtons } ->
+    buttonsToStates : Dict InternalMouse.MouseButton Mouse.ButtonState
+    buttonsToStates =
+        mouseButtons
+        |> List.map InternalMouse.mouseButtonStateFromU8
+        |> List.mapWithIndex \s, i -> (InternalMouse.mouseButtonFromU64 i, s)
+        |> Dict.fromList
+
+    stateOf : InternalMouse.MouseButton -> Mouse.ButtonState
+    stateOf = \button ->
+        Dict.get buttonsToStates button
+        |> Result.withDefault Up
+
+    {
+        left: stateOf MouseButtonLeft,
+        right: stateOf MouseButtonRight,
+        middle: stateOf MouseButtonMiddle,
+        side: stateOf MouseButtonSide,
+        extra: stateOf MouseButtonExtra,
+        forward: stateOf MouseButtonForward,
+        back: stateOf MouseButtonBack,
+    }

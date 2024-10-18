@@ -1,5 +1,6 @@
 use roc_std::{RocBox, RocList, RocResult, RocStr};
 use roc_std_heap::ThreadSafeRefcountedResourceHeap;
+use std::array;
 use std::cell::Cell;
 use std::ffi::{c_int, CString};
 use std::time::SystemTime;
@@ -9,6 +10,7 @@ mod roc;
 
 thread_local! {
     static DRAW_FPS: Cell<Option<(i32, i32)>> = const { Cell::new(None) };
+    static SHOULD_EXIT: Cell<bool> = const { Cell::new(false) };
 }
 
 fn main() {
@@ -23,7 +25,7 @@ fn main() {
         let mut model = roc::call_roc_init();
         let mut frame_count = 0;
 
-        while !bindings::WindowShouldClose() {
+        while !bindings::WindowShouldClose() && !SHOULD_EXIT.get() {
             bindings::BeginDrawing();
 
             bindings::ClearBackground(bindings::Color {
@@ -40,10 +42,10 @@ fn main() {
             let timestamp = duration_since_epoch.as_millis() as u64; // we are casting to u64 and losing precision
 
             let platform_state = roc::PlatformState {
-                timestamp_millis: timestamp,
                 frame_count,
-                keys_down: RocList::empty(),
-                mouse_down: RocList::empty(),
+                keys: get_keys_states(),
+                mouse_buttons: get_mouse_button_states(),
+                timestamp_millis: timestamp,
                 mouse_pos_x: bindings::GetMouseX() as f32,
                 mouse_pos_y: bindings::GetMouseY() as f32,
             };
@@ -63,7 +65,8 @@ fn main() {
 
 #[no_mangle]
 pub extern "C" fn roc_fx_exit() -> RocResult<(), ()> {
-    todo!("roc_fx_exit");
+    SHOULD_EXIT.set(true);
+    RocResult::ok(())
 }
 
 #[no_mangle]
@@ -371,81 +374,38 @@ unsafe extern "C" fn roc_fx_endMode2D(_boxed_camera: RocBox<()>) -> RocResult<()
     RocResult::ok(())
 }
 
-// fn update_keys_down() !void {
-//     var key = rl.getKeyPressed();
+unsafe fn get_mouse_button_states() -> RocList<u8> {
+    let mouse_buttons: [u8; 7] = array::from_fn(|i| {
+        if bindings::IsMouseButtonPressed(i as c_int) {
+            0
+        } else if bindings::IsMouseButtonReleased(i as c_int) {
+            1
+        } else if bindings::IsMouseButtonDown(i as c_int) {
+            2
+        } else {
+            // Up
+            3
+        }
+    });
 
-//     // insert newly pressed keys
-//     while (key != rl.KeyboardKey.key_null) {
-//         try keys_down.put(key, true);
-//         key = rl.getKeyPressed();
-//     }
+    RocList::from_slice(&mouse_buttons)
+}
 
-//     // check all keys that are marked "down" and update if they have been released
-//     var iter = keys_down.iterator();
-//     while (iter.next()) |kv| {
-//         if (kv.value_ptr.*) {
-//             const k = kv.key_ptr.*;
-//             if (!rl.isKeyDown(k)) {
-//                 try keys_down.put(k, false);
-//             }
-//         } else {
-//             // key hasn't been pressed, ignore it
-//         }
-//     }
-// }
+unsafe fn get_keys_states() -> RocList<u8> {
+    let keys: [u8; 350] = array::from_fn(|i| {
+        if bindings::IsKeyPressed(i as c_int) {
+            0
+        } else if bindings::IsKeyReleased(i as c_int) {
+            1
+        } else if bindings::IsKeyDown(i as c_int) {
+            2
+        } else if bindings::IsKeyUp(i as c_int) {
+            3
+        } else {
+            // PressedRepeat
+            4
+        }
+    });
 
-// fn get_keys_down() RocList {
-
-//     // store the keys pressed as we read from the queue... assume max 1000 queued
-//     var key_queue: [1000]u64 = undefined;
-//     var count: u64 = 0;
-
-//     var iter = keys_down.iterator();
-//     while (iter.next()) |kv| {
-//         if (kv.value_ptr.*) {
-//             key_queue[count] = @intCast(@intFromEnum(kv.key_ptr.*));
-//             count = count + 1;
-//         } else {
-//             // key hasn't been pressed, ignore it
-//         }
-//     }
-
-//     return RocList.fromSlice(u64, key_queue[0..count], false);
-// }
-
-// fn get_mouse_down() RocList {
-//     var mouse_down: [6]u64 = undefined;
-//     var count: u64 = 0;
-
-//     if (rl.isMouseButtonDown(rl.MouseButton.mouse_button_left)) {
-//         mouse_down[count] = @intCast(@intFromEnum(rl.MouseButton.mouse_button_left));
-//         count += 1;
-//     }
-
-//     if (rl.isMouseButtonDown(rl.MouseButton.mouse_button_right)) {
-//         mouse_down[count] = @intCast(@intFromEnum(rl.MouseButton.mouse_button_right));
-//         count += 1;
-//     }
-//     if (rl.isMouseButtonDown(rl.MouseButton.mouse_button_middle)) {
-//         mouse_down[count] = @intCast(@intFromEnum(rl.MouseButton.mouse_button_middle));
-//         count += 1;
-//     }
-//     if (rl.isMouseButtonDown(rl.MouseButton.mouse_button_side)) {
-//         mouse_down[count] = @intCast(@intFromEnum(rl.MouseButton.mouse_button_side));
-//         count += 1;
-//     }
-//     if (rl.isMouseButtonDown(rl.MouseButton.mouse_button_extra)) {
-//         mouse_down[count] = @intCast(@intFromEnum(rl.MouseButton.mouse_button_extra));
-//         count += 1;
-//     }
-//     if (rl.isMouseButtonDown(rl.MouseButton.mouse_button_forward)) {
-//         mouse_down[count] = @intCast(@intFromEnum(rl.MouseButton.mouse_button_forward));
-//         count += 1;
-//     }
-//     if (rl.isMouseButtonDown(rl.MouseButton.mouse_button_back)) {
-//         mouse_down[count] = @intCast(@intFromEnum(rl.MouseButton.mouse_button_back));
-//         count += 1;
-//     }
-
-//     return RocList.fromSlice(u64, mouse_down[0..count], false);
-// }
+    RocList::from_slice(&keys)
+}
