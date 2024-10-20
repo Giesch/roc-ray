@@ -371,3 +371,11 @@ unsafe extern "C" fn roc_fx_drawTextureRec(
 
     RocResult::ok(())
 }
+
+#[no_mangle]
+unsafe extern "C" fn roc_fx_loadFileToStr(path: &RocStr) -> RocResult<RocStr, RocStr> {
+    match std::fs::read_to_string(path.as_str()) {
+        Ok(contents) => RocResult::ok(contents.as_str().into()),
+        Err(err) => RocResult::err(err.to_string().as_str().into()),
+    }
+}

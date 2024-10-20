@@ -25,6 +25,7 @@ hosted Effect
         toLogLevel,
         loadTexture,
         drawTextureRec,
+        loadFileToStr,
     ]
     imports []
 
@@ -79,3 +80,5 @@ endMode2D : U64 -> Task {} {}
 Texture := Box {}
 loadTexture : Str -> Task Texture Str
 drawTextureRec : Texture, RocRectangle, RocVector2, RocColor -> Task {} {}
+
+loadFileToStr : Str -> Task Str Str

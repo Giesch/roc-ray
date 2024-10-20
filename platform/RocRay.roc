@@ -30,6 +30,7 @@ module [
     log,
     loadTexture,
     drawTextureRec,
+    loadFileToStr,
 ]
 
 import RocRay.Keys as Keys
@@ -302,3 +303,8 @@ drawTextureRec : { texture : Texture, source : Rectangle, pos : Vector2, tint : 
 drawTextureRec = \{ texture, source, pos, tint } ->
     Effect.drawTextureRec texture (InternalRectangle.fromRect source) (InternalVector.fromVector2 pos) (rgba tint)
     |> Task.mapErr \{} -> crash "unreachable drawTextureRec"
+
+loadFileToStr : Str -> Task Str *
+loadFileToStr = \path ->
+    Effect.loadFileToStr path
+    |> Task.mapErr \_ -> crash "failed to load file"
