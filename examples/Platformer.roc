@@ -3,11 +3,11 @@ app [main, Model] {
     parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.8.0/PCkJq9IGyIpMfwuW-9hjfXd6x-bHb1_OZdacogpBcPM.tar.br",
 }
 
-import ray.RocRay exposing [PlatformState, Texture]
+import ray.RocRay exposing [PlatformState, Texture, Rectangle]
+import ray.RocRay.Keys as Keys
+
 import parser.Xml
 import parser.String
-
-# import "../examples/assets/kenney_abstract-platformer/Spritesheet/spritesheet_players.xml" as playerSheetXml : Str
 
 main : RocRay.Program Model _
 main = { init, render }
@@ -15,6 +15,9 @@ main = { init, render }
 Model : {
     playersAtlas : TextureAtlas,
     playersSheet : Texture,
+    sprites : Sprites,
+    player : Player,
+    timestampMillis : U64,
 }
 
 assetsDir = "examples/assets/kenney_abstract-platformer"
@@ -22,6 +25,27 @@ assetsDir = "examples/assets/kenney_abstract-platformer"
 windowWidth = 800
 windowHeight = 600
 
+Sprites : {
+    walk : List SubTexture,
+    stand : List SubTexture,
+}
+
+Player : {
+    x : F32,
+    y : F32,
+    intent : Intent,
+    animation : Animation,
+}
+
+Facing : [Right, Left]
+Intent : [Idle Facing, Walk Facing]
+
+Animation : [
+    Standing U64,
+    Walking U64,
+]
+
+init : Task Model _
 init =
     RocRay.setTargetFPS! 60
     RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
@@ -30,14 +54,48 @@ init =
 
     (playersAtlas, playersSheet) = loadSpriteAtlas! "spritesheet_players"
 
-    Task.ok {
+    requireSubTexture = \name ->
+        playersAtlas.subTextures
+        |> List.findFirst \st -> st.name == name
+        |> \result ->
+            when result is
+                Ok sub -> sub
+                Err _ -> crash "expected SubTexture $(name)"
+
+    stand : List SubTexture
+    stand = [
+        requireSubTexture "playerGreen_walk1.png",
+        requireSubTexture "playerGreen_stand.png",
+        requireSubTexture "playerGreen_up1.png",
+    ]
+
+    walk : List SubTexture
+    walk =
+        ["1", "2", "3"]
+        |> List.map \n -> Str.joinWith ["playerGreen_walk", n, ".png"] ""
+        |> List.map requireSubTexture
+
+    sprites : Sprites
+    sprites = { walk, stand }
+
+    model : Model
+    model = {
         playersAtlas,
         playersSheet,
+        player: {
+            x: windowWidth / 2.0,
+            y: windowHeight / 2.0,
+            intent: Idle Right,
+            animation: Standing 0,
+        },
+        sprites,
+        timestampMillis: 0,
     }
 
-loadSpriteAtlas : Str -> Task _ _
+    Task.ok model
+
+loadSpriteAtlas : Str -> Task (TextureAtlas, Texture) _
 loadSpriteAtlas = \name ->
-    xml : Str
     xml = RocRay.loadFileToStr! "$(assetsDir)/Spritesheet/$(name).xml"
 
     atlas =
@@ -51,18 +109,100 @@ loadSpriteAtlas = \name ->
     Task.ok (atlas, sheet)
 
 render : Model, PlatformState -> Task Model _
-render = \model, _state ->
-    sources = List.map model.playersAtlas.subTextures \{ x, y, width, height } ->
-        { x, y, width, height }
-    Task.forEach! sources \source ->
-        RocRay.drawTextureRec {
-            source,
-            texture: model.playersSheet,
-            pos: { x: source.x, y: source.y },
-            tint: Gray,
-        }
+render = \model, state ->
+    newModel = update! model state
+    drawPlayer! newModel
+    Task.ok newModel
 
-    Task.ok model
+update : Model, PlatformState -> Task Model _
+update = \model, state ->
+    timestampMillis = state.timestampMillis
+    deltaMillis = timestampMillis - model.timestampMillis
+    deltaTime = Num.toF32 deltaMillis
+
+    intent = readInput! model.player state
+
+    xMove =
+        when intent is
+            Walk Right -> 1.0
+            Walk Left -> -1.0
+            Idle _facing -> 0.0
+    runSpeed = 0.5
+
+    animation =
+        when (intent, model.player.animation) is
+            (Idle _facing, Standing millis) -> Standing (millis + deltaMillis)
+            (Idle _facing, _other) -> Standing 0
+            (Walk _facing, Walking millis) -> Walking (millis + deltaMillis)
+            (Walk _facing, _other) -> Walking 0
+
+    oldPlayer = model.player
+    newPlayer = { oldPlayer &
+        intent,
+        animation,
+        x: oldPlayer.x + xMove * runSpeed * deltaTime,
+    }
+
+    Task.ok { model & player: newPlayer, timestampMillis }
+
+drawPlayer : Model -> Task {} _
+drawPlayer = \model ->
+    flipFacing = \rect ->
+        when playerFacing model.player is
+            Right -> rect
+            Left -> { rect & width: -rect.width }
+
+    animation = model.player.animation
+
+    sprite =
+        when animation is
+            Standing millis ->
+                longStep = (millis // 1000) % 12
+                step =
+                    when longStep is
+                        forward if forward < 4 -> 0
+                        camera if camera < 6 -> 1
+                        forward if forward < 10 -> 0
+                        _up -> 2
+                unsafeGet model.sprites.stand step "standing sprite"
+
+            Walking millis ->
+                mappedSteps = [0, 1, 2, 1]
+                mappedStep = (millis // 100) % 4
+                step = unsafeGet mappedSteps mappedStep "walking sprite mapping"
+                unsafeGet model.sprites.walk step "walking sprite"
+
+    source : Rectangle
+    source =
+        sprite
+        |> minusName
+        |> flipFacing
+
+    texture = model.playersSheet
+    pos = { x: model.player.x, y: model.player.y }
+    tint = White
+    RocRay.drawTextureRec { source, texture, pos, tint }
+
+playerFacing : Player -> Facing
+playerFacing = \player ->
+    when player.intent is
+        Idle facing -> facing
+        Walk facing -> facing
+
+readInput : Player, PlatformState -> Task Intent _
+readInput = \player, { keys } ->
+    newPlayer =
+        if Keys.anyDown keys [KeyLeft, KeyA] then
+            Walk Left
+        else if Keys.anyDown keys [KeyRight, KeyD] then
+            Walk Right
+        else
+            Idle (playerFacing player)
+
+    Task.ok newPlayer
+
+minusName : SubTexture -> Rectangle
+minusName = \{ x, y, width, height } -> { x, y, width, height }
 
 TextureAtlas : {
     subTextures : List SubTexture,
@@ -78,10 +218,12 @@ SubTexture : {
 
 parseSheetXml : Str -> Result TextureAtlas Str
 parseSheetXml = \spriteSheetXml ->
-    String.parseStr Xml.xmlParser spriteSheetXml
+    spriteSheetXml
+    |> Str.trim
+    |> \str -> String.parseStr Xml.xmlParser str
     |> Result.try \doc -> xmlTextureAtlas doc.root
-    |> Result.mapErr \e ->
-        when e is
+    |> Result.mapErr \err ->
+        when err is
             ParsingFailure f -> "ParsingFailure: $(f)"
             ParsingIncomplete rem -> "ParsingIncomplete: $(rem)"
 
@@ -138,7 +280,8 @@ xmlTextureAtlas = \root ->
                 TextNode t -> Err t
     |> Result.map \subTextures -> { subTextures }
 
-# TODO for xml parser
-# handle trailing whitespace
-# handle comments
-# random text node?
+unsafeGet : List a, U64, Str -> a
+unsafeGet = \list, i, message ->
+    when List.get list i is
+        Ok item -> item
+        Err _ -> crash message
