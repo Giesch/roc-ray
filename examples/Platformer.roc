@@ -45,7 +45,6 @@ init =
     RocRay.setTargetFPS! 60
     RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
     RocRay.setWindowTitle! "Platformer Example"
-    RocRay.setBackgroundColor! White
 
     spriteSheet = SpriteAtlas.load!
 
@@ -84,7 +83,11 @@ init =
 render : Model, PlatformState -> Task Model _
 render = \model, state ->
     newModel = update! model state
+
+    RocRay.beginDrawing! White
     drawPlayer! newModel
+    RocRay.endDrawing!
+
     Task.ok newModel
 
 update : Model, PlatformState -> Task Model _
@@ -177,13 +180,13 @@ animate = \animation ->
     offset = totalElapsed % totalDuration
 
     (_elapsed, chosenSprite) =
-        List.walkUntil steps (0, Err None) \(timeSpent, _lastSprite), (nextSprite, duration) ->
-            time = timeSpent + duration
-            newState = (time, Ok nextSprite)
-            if time >= offset then
-                Break newState
+        List.walkUntil steps (0, Err None) \(elapsed, _lastSprite), (nextSprite, duration) ->
+            nextElapsed = elapsed + duration
+            next = (nextElapsed, Ok nextSprite)
+            if nextElapsed >= offset then
+                Break next
             else
-                Continue newState
+                Continue next
 
     when chosenSprite is
         Ok sprite -> sprite
@@ -194,16 +197,16 @@ AnimationStep : (Sprite, U64)
 
 walkingAnimation : List AnimationStep
 walkingAnimation = [
-    (SpriteAtlas.playerGreenwalk1, 100),
-    (SpriteAtlas.playerGreenwalk2, 100),
-    (SpriteAtlas.playerGreenwalk3, 100),
-    (SpriteAtlas.playerGreenwalk2, 100),
+    (SpriteAtlas.playerGreenwalk1, 75),
+    (SpriteAtlas.playerGreenwalk2, 75),
+    (SpriteAtlas.playerGreenwalk3, 75),
+    (SpriteAtlas.playerGreenwalk2, 75),
 ]
 
 idlingAnimation : List AnimationStep
 idlingAnimation = [
-    (SpriteAtlas.playerGreenwalk1, 4 * 1000),
-    (SpriteAtlas.playerGreenstand, 2 * 1000),
-    (SpriteAtlas.playerGreenwalk1, 4 * 1000),
-    (SpriteAtlas.playerGreenup1, 2 * 1000),
+    (SpriteAtlas.playerGreenwalk1, 4_000),
+    (SpriteAtlas.playerGreenstand, 2_000),
+    (SpriteAtlas.playerGreenwalk1, 4_000),
+    (SpriteAtlas.playerGreenup1, 2_000),
 ]
