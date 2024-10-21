@@ -80,8 +80,8 @@ format file:
     .\windows\bin\roc.exe format {{file}}
 
 
-# generate SpriteAtlas.roc for platformer example
+# generate Sprites.roc for the platformer example
 [unix]
 sprites:
-    ./scripts/sprite_atlas.roc
-    roc format examples/Platformer/Generated/Sprites.roc
+    ./scripts/generate_sprite_atlas.roc
+    roc format examples/platformer/Generated/Sprites.roc

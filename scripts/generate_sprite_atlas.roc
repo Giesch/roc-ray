@@ -14,13 +14,16 @@ import cli.Stderr
 import parser.Xml
 import parser.String
 
+import ascii.Ascii
+import ascii.Char
+
 # args to scripts seem broken on linux;
 # https://roc.zulipchat.com/#narrow/channel/231634-beginners/topic/How.20to.20enable.20dbg.3F/near/473415831
 # these paths could potentially move to the justfile if that's fixed
 spriteSheetComplete =
     "./examples/assets/kenney_abstract-platformer/Spritesheet/spritesheet_complete.xml"
 spriteSheetModulePath =
-    "./examples/Platformer/Generated/Sprites.roc"
+    "./examples/platformer/Generated/Sprites.roc"
 
 # ShoeBox XML TextureAtlas
 TextureAtlas : {
@@ -64,8 +67,35 @@ run = \{ absoluteXmlPath } ->
 
 generateRocModule : { atlas : TextureAtlas, imagePath : Str } -> Str
 generateRocModule = \{ atlas, imagePath } ->
-    spriteNameToRocName = \str ->
-        str |> Str.replaceEach "_" "" |> Str.replaceLast ".png" ""
+    asciiLiteral = \literal ->
+        when Char.fromAsciiByte literal is
+            Ok char -> char
+            Err _unreachable -> crash "ascii literal"
+
+    lowercaseAlphabet = List.range { start: At 97, end: At 122 }
+
+    underscoreSubstitutions =
+        charsToStr = \chars -> chars |> Ascii.fromChars |> Ascii.toStr
+
+        List.map lowercaseAlphabet \ch ->
+            char = asciiLiteral ch
+            underscore = asciiLiteral 95
+            replaceThis = charsToStr [underscore, char]
+            withThis = charsToStr [Char.toUppercase char]
+
+            (replaceThis, withThis)
+
+    # replace something like camelCase_color with camelCaseColor
+    # something like cammelCase_1 is unchanged
+    camelCaseUnderscores = \spriteName ->
+        List.walk underscoreSubstitutions spriteName \str, (replaceThis, withThis) ->
+            Str.replaceEach str replaceThis withThis
+
+    spriteNameToRocName = \spriteName ->
+        spriteName
+        |> camelCaseUnderscores
+        |> Str.replaceEach "_" ""
+        |> Str.replaceLast ".png" ""
 
     spriteExports =
         atlas.subTextures
@@ -110,7 +140,7 @@ generateRocModule = \{ atlas, imagePath } ->
     imagePath =
         "$(imagePath)"
 
-    ## load the spritesheet
+    ## load the sprite sheet as a raylib texture
     load : Task Texture _
     load =
         RocRay.loadTexture imagePath
@@ -137,15 +167,15 @@ loadSpriteAtlas = \path ->
     xml = File.readUtf8! path
 
     atlas =
-        when parseSheetXml (Str.trim xml) is
+        when parseAtlasXml (Str.trim xml) is
             Ok parsed -> parsed
             Err err -> crash "error parsing $(path) sprite sheet xml: $(err)"
 
     Task.ok atlas
 
-parseSheetXml : Str -> Result TextureAtlas Str
-parseSheetXml = \spriteSheetXml ->
-    spriteSheetXml
+parseAtlasXml : Str -> Result TextureAtlas Str
+parseAtlasXml = \spriteAtlasXml ->
+    spriteAtlasXml
     |> Str.trim
     |> \str -> String.parseStr Xml.xmlParser str
     |> Result.try \doc -> xmlTextureAtlas doc.root
@@ -161,48 +191,47 @@ xmlTextureAtlas = \root ->
         |> Result.map \a -> a.value
         |> Result.try Str.toF32
 
-    gatherErrors : _ -> Result SubTexture [ParsingFailure Str]
-    gatherErrors = \results ->
-        when results is
-            { name: Ok n, x: Ok x, y: Ok y, width: Ok w, height: Ok h } ->
-                Ok { name: n, x, y, width: w, height: h }
-
-            _ehhh ->
-                Err (ParsingFailure "missing attributes on SubTexture")
-
-    parseSubTexture : Xml.Node -> Result [ST SubTexture, TextNode Str] _
+    parseSubTexture : [Element _ _ _] -> SubTexture
     parseSubTexture = \node ->
         when node is
             Element "SubTexture" attrs _children ->
                 name =
                     List.findFirst attrs (\a -> a.name == "name")
                     |> Result.map (\a -> a.value)
-                x = parseIntAttr { attrs, name: "x" }
-                y = parseIntAttr { attrs, name: "y" }
+                xResult = parseIntAttr { attrs, name: "x" }
+                yResult = parseIntAttr { attrs, name: "y" }
                 width = parseIntAttr { attrs, name: "width" }
                 height = parseIntAttr { attrs, name: "height" }
-                gatherErrors { name, x, y, width, height } |> Result.map ST
+
+                when { name, x: xResult, y: yResult, width, height } is
+                    { name: Ok n, x: Ok x, y: Ok y, width: Ok w, height: Ok h } ->
+                        { name: n, x, y, width: w, height: h }
+
+                    weirdAttrs ->
+                        crash "missing attributes on SubTexture: $(Inspect.toStr weirdAttrs)"
 
             Element elem _attrs _children ->
-                Err (ParsingFailure "unexpected elem: $(elem)")
+                crash "unexpected elem: $(elem)"
 
-            Text t -> Ok (TextNode t)
+    # in the sprite atlas, the only text nodes are interstitial whitespace
+    # we could handle that better in the xml parser
+    noTextNodesJustElements : Xml.Node -> Result [Element _ _ _] [Text]
+    noTextNodesJustElements = \node ->
+        when node is
+            Element elem attrs children ->
+                childElems = List.keepOks children noTextNodesJustElements
+                Ok (Element elem attrs childElems)
 
-    subTextureResult =
+            Text _ ->
+                Err Text
+
+    subTextures : List SubTexture
+    subTextures =
         when root is
             Element "TextureAtlas" _attrs children ->
-                List.mapTry children parseSubTexture
+                elements = List.keepOks children noTextNodesJustElements
+                List.map elements parseSubTexture
 
-            Element elem _attrs _children ->
-                Err (ParsingFailure "unexpected elem: $(elem)")
+            other -> crash "unexpected xml node: $(Inspect.toStr other)"
 
-            Text content ->
-                Err (ParsingFailure "unexpected text node: $(content)")
-
-    subTextureResult
-    |> Result.map \nodes ->
-        List.keepOks nodes \n ->
-            when n is
-                ST subTexture -> Ok subTexture
-                TextNode t -> Err t
-    |> Result.map \subTextures -> { subTextures }
+    Ok { subTextures }

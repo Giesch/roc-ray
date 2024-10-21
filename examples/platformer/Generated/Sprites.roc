@@ -4,36 +4,36 @@ module [
     load,
     rect,
     blockBrown,
-    blockBrownbroken,
+    blockBrownBroken,
     blockGreen,
-    blockGreenkey,
-    blockGreenlock,
-    blockGreenpuzzle,
+    blockGreenKey,
+    blockGreenLock,
+    blockGreenPuzzle,
     blockGrey,
-    blockGreybroken,
+    blockGreyBroken,
     blockRed,
-    blockRedkey,
-    blockRedlock,
-    blockRedpuzzle,
+    blockRedKey,
+    blockRedLock,
+    blockRedPuzzle,
     blueCrystal,
     blueGem,
     blueJewel,
     buttonFloor,
-    buttonFloorpressed,
+    buttonFloorPressed,
     buttonGreen,
-    buttonGreenpressed,
+    buttonGreenPressed,
     buttonRed,
-    buttonRedpressed,
+    buttonRedPressed,
     discGreen,
     discRed,
     doorGreen,
-    doorGreenlock,
-    doorGreentop,
+    doorGreenLock,
+    doorGreenTop,
     doorOpen,
-    doorOpentop,
+    doorOpenTop,
     doorRed,
-    doorRedlock,
-    doorRedtop,
+    doorRedLock,
+    doorRedTop,
     enemyFloating1,
     enemyFloating2,
     enemyFloating3,
@@ -64,27 +64,27 @@ module [
     fenceMid,
     fenceOpen,
     fenceRight,
-    flagGreendown,
-    flagGreenup,
-    flagReddown,
-    flagRedup,
+    flagGreenDown,
+    flagGreenUp,
+    flagRedDown,
+    flagRedUp,
     fluidBlue,
-    fluidBluetop,
+    fluidBlueTop,
     fluidBrown,
-    fluidBrowntop,
+    fluidBrownTop,
     fluidGreen,
-    fluidGreentop,
+    fluidGreenTop,
     fluidRed,
-    fluidRedtop,
+    fluidRedTop,
     greenCrystal,
     greenGem,
     greenJewel,
     keyGreen,
     keyRed,
-    ladderNarrowmid,
-    ladderNarrowtop,
-    ladderWidemid,
-    ladderWidetop,
+    ladderNarrowMid,
+    ladderNarrowTop,
+    ladderWideMid,
+    ladderWideTop,
     lockGreen,
     lockGreenBottom,
     lockGreenLeft,
@@ -101,7 +101,7 @@ module [
     lockRedTop,
     outlineCrystal,
     outlineDisc,
-    outlineDiscalt,
+    outlineDiscAlt,
     outlineGem,
     outlineJewel,
     outlineKey,
@@ -136,89 +136,89 @@ module [
     plantRed6,
     plantStemTleft,
     plantStemTright,
-    plantStemcornerLeft,
-    plantStemcornerRight,
-    plantStemcross,
-    plantStemhorizontal,
-    plantStemvertical,
-    plantThornshorizontal,
-    plantThornsvertical,
-    plantTopblue,
-    plantTopleaves,
-    plantTopred,
-    plantTopyellow,
-    playerBluedead,
-    playerBlueduck,
-    playerBluefall,
-    playerBluehit,
-    playerBlueroll,
-    playerBluestand,
-    playerBlueswim1,
-    playerBlueswim2,
-    playerBlueswitch1,
-    playerBlueswitch2,
-    playerBlueup1,
-    playerBlueup2,
-    playerBlueup3,
-    playerBluewalk1,
-    playerBluewalk2,
-    playerBluewalk3,
-    playerBluewalk4,
-    playerBluewalk5,
-    playerGreendead,
-    playerGreenduck,
-    playerGreenfall,
-    playerGreenhit,
-    playerGreenroll,
-    playerGreenstand,
-    playerGreenswim1,
-    playerGreenswim2,
-    playerGreenswitch1,
-    playerGreenswitch2,
-    playerGreenup1,
-    playerGreenup2,
-    playerGreenup3,
-    playerGreenwalk1,
-    playerGreenwalk2,
-    playerGreenwalk3,
-    playerGreenwalk4,
-    playerGreenwalk5,
-    playerGreydead,
-    playerGreyduck,
-    playerGreyfall,
-    playerGreyhit,
-    playerGreyroll,
-    playerGreystand,
-    playerGreyswim1,
-    playerGreyswim2,
-    playerGreyswitch1,
-    playerGreyswitch2,
-    playerGreyup1,
-    playerGreyup2,
-    playerGreyup3,
-    playerGreywalk1,
-    playerGreywalk2,
-    playerGreywalk3,
-    playerGreywalk4,
-    playerGreywalk5,
-    playerReddead,
-    playerRedduck,
-    playerRedfall,
-    playerRedhit,
-    playerRedroll,
-    playerRedstand,
-    playerRedswim1,
-    playerRedswim2,
-    playerRedswitch1,
-    playerRedswitch2,
-    playerRedup1,
-    playerRedup2,
-    playerRedup3,
-    playerRedwalk1,
-    playerRedwalk2,
-    playerRedwalk3,
-    playerRedwalk4,
-    playerRedwalk5,
+    plantStemCornerLeft,
+    plantStemCornerRight,
+    plantStemCross,
+    plantStemHorizontal,
+    plantStemVertical,
+    plantThornsHorizontal,
+    plantThornsVertical,
+    plantTopBlue,
+    plantTopLeaves,
+    plantTopRed,
+    plantTopYellow,
+    playerBlueDead,
+    playerBlueDuck,
+    playerBlueFall,
+    playerBlueHit,
+    playerBlueRoll,
+    playerBlueStand,
+    playerBlueSwim1,
+    playerBlueSwim2,
+    playerBlueSwitch1,
+    playerBlueSwitch2,
+    playerBlueUp1,
+    playerBlueUp2,
+    playerBlueUp3,
+    playerBlueWalk1,
+    playerBlueWalk2,
+    playerBlueWalk3,
+    playerBlueWalk4,
+    playerBlueWalk5,
+    playerGreenDead,
+    playerGreenDuck,
+    playerGreenFall,
+    playerGreenHit,
+    playerGreenRoll,
+    playerGreenStand,
+    playerGreenSwim1,
+    playerGreenSwim2,
+    playerGreenSwitch1,
+    playerGreenSwitch2,
+    playerGreenUp1,
+    playerGreenUp2,
+    playerGreenUp3,
+    playerGreenWalk1,
+    playerGreenWalk2,
+    playerGreenWalk3,
+    playerGreenWalk4,
+    playerGreenWalk5,
+    playerGreyDead,
+    playerGreyDuck,
+    playerGreyFall,
+    playerGreyHit,
+    playerGreyRoll,
+    playerGreyStand,
+    playerGreySwim1,
+    playerGreySwim2,
+    playerGreySwitch1,
+    playerGreySwitch2,
+    playerGreyUp1,
+    playerGreyUp2,
+    playerGreyUp3,
+    playerGreyWalk1,
+    playerGreyWalk2,
+    playerGreyWalk3,
+    playerGreyWalk4,
+    playerGreyWalk5,
+    playerRedDead,
+    playerRedDuck,
+    playerRedFall,
+    playerRedHit,
+    playerRedRoll,
+    playerRedStand,
+    playerRedSwim1,
+    playerRedSwim2,
+    playerRedSwitch1,
+    playerRedSwitch2,
+    playerRedUp1,
+    playerRedUp2,
+    playerRedUp3,
+    playerRedWalk1,
+    playerRedWalk2,
+    playerRedWalk3,
+    playerRedWalk4,
+    playerRedWalk5,
     puzzleGreen,
     puzzleRed,
     redCrystal,
@@ -229,25 +229,25 @@ module [
     signArrowBR,
     signArrowTL,
     signArrowTR,
-    signArrowdown,
-    signArrowleft,
-    signArrowright,
-    signArrowup,
+    signArrowDown,
+    signArrowLeft,
+    signArrowRight,
+    signArrowUp,
     signLarge,
     signSmall,
     signpost,
     spikesHigh,
     spikesLow,
-    switchGreenleft,
-    switchGreenmid,
-    switchGreenoff,
-    switchGreenon,
-    switchGreenright,
-    switchRedleft,
-    switchRedmid,
-    switchRedoff,
-    switchRedon,
-    switchRedright,
+    switchGreenLeft,
+    switchGreenMid,
+    switchGreenOff,
+    switchGreenOn,
+    switchGreenRight,
+    switchRedLeft,
+    switchRedMid,
+    switchRedOff,
+    switchRedOn,
+    switchRedRight,
     tileBlue01,
     tileBlue02,
     tileBlue03,
@@ -357,8 +357,8 @@ module [
     tileYellow26,
     tileYellow27,
     vine,
-    vinebottom,
-    vinebottomAlt,
+    vineBottom,
+    vineBottomAlt,
     yellowCrystal,
     yellowGem,
     yellowJewel,
@@ -371,7 +371,7 @@ imagePath : Str
 imagePath =
     "examples/assets/kenney_abstract-platformer/Spritesheet/spritesheet_complete.png"
 
-## load the spritesheet
+## load the sprite sheet as a raylib texture
 load : Task Texture _
 load =
     RocRay.loadTexture imagePath
@@ -399,8 +399,8 @@ blockBrown = {
     height: 64,
 }
 
-blockBrownbroken : Sprite
-blockBrownbroken = {
+blockBrownBroken : Sprite
+blockBrownBroken = {
     name: "blockBrown_broken.png",
     x: 455,
     y: 914,
@@ -417,8 +417,8 @@ blockGreen = {
     height: 64,
 }
 
-blockGreenkey : Sprite
-blockGreenkey = {
+blockGreenKey : Sprite
+blockGreenKey = {
     name: "blockGreen_key.png",
     x: 520,
     y: 65,
@@ -426,8 +426,8 @@ blockGreenkey = {
     height: 64,
 }
 
-blockGreenlock : Sprite
-blockGreenlock = {
+blockGreenLock : Sprite
+blockGreenLock = {
     name: "blockGreen_lock.png",
     x: 520,
     y: 179,
@@ -435,8 +435,8 @@ blockGreenlock = {
     height: 64,
 }
 
-blockGreenpuzzle : Sprite
-blockGreenpuzzle = {
+blockGreenPuzzle : Sprite
+blockGreenPuzzle = {
     name: "blockGreen_puzzle.png",
     x: 520,
     y: 244,
@@ -453,8 +453,8 @@ blockGrey = {
     height: 64,
 }
 
-blockGreybroken : Sprite
-blockGreybroken = {
+blockGreyBroken : Sprite
+blockGreyBroken = {
     name: "blockGrey_broken.png",
     x: 520,
     y: 374,
@@ -471,8 +471,8 @@ blockRed = {
     height: 64,
 }
 
-blockRedkey : Sprite
-blockRedkey = {
+blockRedKey : Sprite
+blockRedKey = {
     name: "blockRed_key.png",
     x: 520,
     y: 634,
@@ -480,8 +480,8 @@ blockRedkey = {
     height: 64,
 }
 
-blockRedlock : Sprite
-blockRedlock = {
+blockRedLock : Sprite
+blockRedLock = {
     name: "blockRed_lock.png",
     x: 520,
     y: 795,
@@ -489,8 +489,8 @@ blockRedlock = {
     height: 64,
 }
 
-blockRedpuzzle : Sprite
-blockRedpuzzle = {
+blockRedPuzzle : Sprite
+blockRedPuzzle = {
     name: "blockRed_puzzle.png",
     x: 520,
     y: 860,
@@ -534,8 +534,8 @@ buttonFloor = {
     height: 12,
 }
 
-buttonFloorpressed : Sprite
-buttonFloorpressed = {
+buttonFloorPressed : Sprite
+buttonFloorPressed = {
     name: "buttonFloor_pressed.png",
     x: 65,
     y: 1014,
@@ -552,8 +552,8 @@ buttonGreen = {
     height: 29,
 }
 
-buttonGreenpressed : Sprite
-buttonGreenpressed = {
+buttonGreenPressed : Sprite
+buttonGreenPressed = {
     name: "buttonGreen_pressed.png",
     x: 696,
     y: 1005,
@@ -570,8 +570,8 @@ buttonRed = {
     height: 29,
 }
 
-buttonRedpressed : Sprite
-buttonRedpressed = {
+buttonRedPressed : Sprite
+buttonRedPressed = {
     name: "buttonRed_pressed.png",
     x: 645,
     y: 1005,
@@ -606,8 +606,8 @@ doorGreen = {
     height: 64,
 }
 
-doorGreenlock : Sprite
-doorGreenlock = {
+doorGreenLock : Sprite
+doorGreenLock = {
     name: "doorGreen_lock.png",
     x: 650,
     y: 92,
@@ -615,8 +615,8 @@ doorGreenlock = {
     height: 64,
 }
 
-doorGreentop : Sprite
-doorGreentop = {
+doorGreenTop : Sprite
+doorGreenTop = {
     name: "doorGreen_top.png",
     x: 520,
     y: 699,
@@ -633,8 +633,8 @@ doorOpen = {
     height: 64,
 }
 
-doorOpentop : Sprite
-doorOpentop = {
+doorOpenTop : Sprite
+doorOpenTop = {
     name: "doorOpen_top.png",
     x: 585,
     y: 65,
@@ -651,8 +651,8 @@ doorRed = {
     height: 64,
 }
 
-doorRedlock : Sprite
-doorRedlock = {
+doorRedLock : Sprite
+doorRedLock = {
     name: "doorRed_lock.png",
     x: 325,
     y: 427,
@@ -660,8 +660,8 @@ doorRedlock = {
     height: 64,
 }
 
-doorRedtop : Sprite
-doorRedtop = {
+doorRedTop : Sprite
+doorRedTop = {
     name: "doorRed_top.png",
     x: 520,
     y: 925,
@@ -939,8 +939,8 @@ fenceRight = {
     height: 45,
 }
 
-flagGreendown : Sprite
-flagGreendown = {
+flagGreenDown : Sprite
+flagGreenDown = {
     name: "flagGreen_down.png",
     x: 987,
     y: 813,
@@ -948,8 +948,8 @@ flagGreendown = {
     height: 61,
 }
 
-flagGreenup : Sprite
-flagGreenup = {
+flagGreenUp : Sprite
+flagGreenUp = {
     name: "flagGreen_up.png",
     x: 650,
     y: 446,
@@ -957,8 +957,8 @@ flagGreenup = {
     height: 61,
 }
 
-flagReddown : Sprite
-flagReddown = {
+flagRedDown : Sprite
+flagRedDown = {
     name: "flagRed_down.png",
     x: 987,
     y: 751,
@@ -966,8 +966,8 @@ flagReddown = {
     height: 61,
 }
 
-flagRedup : Sprite
-flagRedup = {
+flagRedUp : Sprite
+flagRedUp = {
     name: "flagRed_up.png",
     x: 650,
     y: 384,
@@ -984,8 +984,8 @@ fluidBlue = {
     height: 64,
 }
 
-fluidBluetop : Sprite
-fluidBluetop = {
+fluidBlueTop : Sprite
+fluidBlueTop = {
     name: "fluidBlue_top.png",
     x: 585,
     y: 820,
@@ -1002,8 +1002,8 @@ fluidBrown = {
     height: 64,
 }
 
-fluidBrowntop : Sprite
-fluidBrowntop = {
+fluidBrownTop : Sprite
+fluidBrownTop = {
     name: "fluidBrown_top.png",
     x: 585,
     y: 381,
@@ -1020,8 +1020,8 @@ fluidGreen = {
     height: 64,
 }
 
-fluidGreentop : Sprite
-fluidGreentop = {
+fluidGreenTop : Sprite
+fluidGreenTop = {
     name: "fluidGreen_top.png",
     x: 585,
     y: 195,
@@ -1038,8 +1038,8 @@ fluidRed = {
     height: 64,
 }
 
-fluidRedtop : Sprite
-fluidRedtop = {
+fluidRedTop : Sprite
+fluidRedTop = {
     name: "fluidRed_top.png",
     x: 520,
     y: 569,
@@ -1092,8 +1092,8 @@ keyRed = {
     height: 30,
 }
 
-ladderNarrowmid : Sprite
-ladderNarrowmid = {
+ladderNarrowMid : Sprite
+ladderNarrowMid = {
     name: "ladderNarrow_mid.png",
     x: 650,
     y: 508,
@@ -1101,8 +1101,8 @@ ladderNarrowmid = {
     height: 64,
 }
 
-ladderNarrowtop : Sprite
-ladderNarrowtop = {
+ladderNarrowTop : Sprite
+ladderNarrowTop = {
     name: "ladderNarrow_top.png",
     x: 650,
     y: 724,
@@ -1110,8 +1110,8 @@ ladderNarrowtop = {
     height: 48,
 }
 
-ladderWidemid : Sprite
-ladderWidemid = {
+ladderWideMid : Sprite
+ladderWideMid = {
     name: "ladderWide_mid.png",
     x: 520,
     y: 439,
@@ -1119,8 +1119,8 @@ ladderWidemid = {
     height: 64,
 }
 
-ladderWidetop : Sprite
-ladderWidetop = {
+ladderWideTop : Sprite
+ladderWideTop = {
     name: "ladderWide_top.png",
     x: 520,
     y: 130,
@@ -1272,8 +1272,8 @@ outlineDisc = {
     height: 41,
 }
 
-outlineDiscalt : Sprite
-outlineDiscalt = {
+outlineDiscAlt : Sprite
+outlineDiscAlt = {
     name: "outlineDisc_alt.png",
     x: 848,
     y: 921,
@@ -1587,8 +1587,8 @@ plantStemTright = {
     height: 64,
 }
 
-plantStemcornerLeft : Sprite
-plantStemcornerLeft = {
+plantStemCornerLeft : Sprite
+plantStemCornerLeft = {
     name: "plantStem_cornerLeft.png",
     x: 890,
     y: 578,
@@ -1596,8 +1596,8 @@ plantStemcornerLeft = {
     height: 37,
 }
 
-plantStemcornerRight : Sprite
-plantStemcornerRight = {
+plantStemCornerRight : Sprite
+plantStemCornerRight = {
     name: "plantStem_cornerRight.png",
     x: 806,
     y: 452,
@@ -1605,8 +1605,8 @@ plantStemcornerRight = {
     height: 37,
 }
 
-plantStemcross : Sprite
-plantStemcross = {
+plantStemCross : Sprite
+plantStemCross = {
     name: "plantStem_cross.png",
     x: 455,
     y: 719,
@@ -1614,8 +1614,8 @@ plantStemcross = {
     height: 64,
 }
 
-plantStemhorizontal : Sprite
-plantStemhorizontal = {
+plantStemHorizontal : Sprite
+plantStemHorizontal = {
     name: "plantStem_horizontal.png",
     x: 65,
     y: 990,
@@ -1623,8 +1623,8 @@ plantStemhorizontal = {
     height: 10,
 }
 
-plantStemvertical : Sprite
-plantStemvertical = {
+plantStemVertical : Sprite
+plantStemVertical = {
     name: "plantStem_vertical.png",
     x: 65,
     y: 990,
@@ -1632,8 +1632,8 @@ plantStemvertical = {
     height: 10,
 }
 
-plantThornshorizontal : Sprite
-plantThornshorizontal = {
+plantThornsHorizontal : Sprite
+plantThornsHorizontal = {
     name: "plantThorns_horizontal.png",
     x: 455,
     y: 979,
@@ -1641,8 +1641,8 @@ plantThornshorizontal = {
     height: 36,
 }
 
-plantThornsvertical : Sprite
-plantThornsvertical = {
+plantThornsVertical : Sprite
+plantThornsVertical = {
     name: "plantThorns_vertical.png",
     x: 927,
     y: 726,
@@ -1650,8 +1650,8 @@ plantThornsvertical = {
     height: 64,
 }
 
-plantTopblue : Sprite
-plantTopblue = {
+plantTopBlue : Sprite
+plantTopBlue = {
     name: "plantTop_blue.png",
     x: 650,
     y: 157,
@@ -1659,8 +1659,8 @@ plantTopblue = {
     height: 54,
 }
 
-plantTopleaves : Sprite
-plantTopleaves = {
+plantTopLeaves : Sprite
+plantTopLeaves = {
     name: "plantTop_leaves.png",
     x: 650,
     y: 267,
@@ -1668,8 +1668,8 @@ plantTopleaves = {
     height: 31,
 }
 
-plantTopred : Sprite
-plantTopred = {
+plantTopRed : Sprite
+plantTopRed = {
     name: "plantTop_red.png",
     x: 650,
     y: 299,
@@ -1677,8 +1677,8 @@ plantTopred = {
     height: 54,
 }
 
-plantTopyellow : Sprite
-plantTopyellow = {
+plantTopYellow : Sprite
+plantTopYellow = {
     name: "plantTop_yellow.png",
     x: 650,
     y: 212,
@@ -1686,8 +1686,8 @@ plantTopyellow = {
     height: 54,
 }
 
-playerBluedead : Sprite
-playerBluedead = {
+playerBlueDead : Sprite
+playerBlueDead = {
     name: "playerBlue_dead.png",
     x: 762,
     y: 258,
@@ -1695,8 +1695,8 @@ playerBluedead = {
     height: 47,
 }
 
-playerBlueduck : Sprite
-playerBlueduck = {
+playerBlueDuck : Sprite
+playerBlueDuck = {
     name: "playerBlue_duck.png",
     x: 650,
     y: 605,
@@ -1704,8 +1704,8 @@ playerBlueduck = {
     height: 40,
 }
 
-playerBluefall : Sprite
-playerBluefall = {
+playerBlueFall : Sprite
+playerBlueFall = {
     name: "playerBlue_fall.png",
     x: 805,
     y: 490,
@@ -1713,8 +1713,8 @@ playerBluefall = {
     height: 54,
 }
 
-playerBluehit : Sprite
-playerBluehit = {
+playerBlueHit : Sprite
+playerBlueHit = {
     name: "playerBlue_hit.png",
     x: 758,
     y: 730,
@@ -1722,8 +1722,8 @@ playerBluehit = {
     height: 40,
 }
 
-playerBlueroll : Sprite
-playerBlueroll = {
+playerBlueRoll : Sprite
+playerBlueRoll = {
     name: "playerBlue_roll.png",
     x: 849,
     y: 388,
@@ -1731,8 +1731,8 @@ playerBlueroll = {
     height: 40,
 }
 
-playerBluestand : Sprite
-playerBluestand = {
+playerBlueStand : Sprite
+playerBlueStand = {
     name: "playerBlue_stand.png",
     x: 762,
     y: 203,
@@ -1740,8 +1740,8 @@ playerBluestand = {
     height: 54,
 }
 
-playerBlueswim1 : Sprite
-playerBlueswim1 = {
+playerBlueSwim1 : Sprite
+playerBlueSwim1 = {
     name: "playerBlue_swim1.png",
     x: 805,
     y: 545,
@@ -1749,8 +1749,8 @@ playerBlueswim1 = {
     height: 53,
 }
 
-playerBlueswim2 : Sprite
-playerBlueswim2 = {
+playerBlueSwim2 : Sprite
+playerBlueSwim2 = {
     name: "playerBlue_swim2.png",
     x: 764,
     y: 0,
@@ -1758,8 +1758,8 @@ playerBlueswim2 = {
     height: 54,
 }
 
-playerBlueswitch1 : Sprite
-playerBlueswitch1 = {
+playerBlueSwitch1 : Sprite
+playerBlueSwitch1 = {
     name: "playerBlue_switch1.png",
     x: 650,
     y: 895,
@@ -1767,8 +1767,8 @@ playerBlueswitch1 = {
     height: 54,
 }
 
-playerBlueswitch2 : Sprite
-playerBlueswitch2 = {
+playerBlueSwitch2 : Sprite
+playerBlueSwitch2 = {
     name: "playerBlue_switch2.png",
     x: 650,
     y: 950,
@@ -1776,8 +1776,8 @@ playerBlueswitch2 = {
     height: 54,
 }
 
-playerBlueup1 : Sprite
-playerBlueup1 = {
+playerBlueUp1 : Sprite
+playerBlueUp1 = {
     name: "playerBlue_up1.png",
     x: 760,
     y: 435,
@@ -1785,8 +1785,8 @@ playerBlueup1 = {
     height: 54,
 }
 
-playerBlueup2 : Sprite
-playerBlueup2 = {
+playerBlueUp2 : Sprite
+playerBlueUp2 = {
     name: "playerBlue_up2.png",
     x: 759,
     y: 556,
@@ -1794,8 +1794,8 @@ playerBlueup2 = {
     height: 50,
 }
 
-playerBlueup3 : Sprite
-playerBlueup3 = {
+playerBlueUp3 : Sprite
+playerBlueUp3 = {
     name: "playerBlue_up3.png",
     x: 758,
     y: 771,
@@ -1803,8 +1803,8 @@ playerBlueup3 = {
     height: 40,
 }
 
-playerBluewalk1 : Sprite
-playerBluewalk1 = {
+playerBlueWalk1 : Sprite
+playerBlueWalk1 = {
     name: "playerBlue_walk1.png",
     x: 759,
     y: 812,
@@ -1812,8 +1812,8 @@ playerBluewalk1 = {
     height: 54,
 }
 
-playerBluewalk2 : Sprite
-playerBluewalk2 = {
+playerBlueWalk2 : Sprite
+playerBlueWalk2 = {
     name: "playerBlue_walk2.png",
     x: 760,
     y: 380,
@@ -1821,8 +1821,8 @@ playerBluewalk2 = {
     height: 54,
 }
 
-playerBluewalk3 : Sprite
-playerBluewalk3 = {
+playerBlueWalk3 : Sprite
+playerBlueWalk3 = {
     name: "playerBlue_walk3.png",
     x: 759,
     y: 503,
@@ -1830,8 +1830,8 @@ playerBluewalk3 = {
     height: 52,
 }
 
-playerBluewalk4 : Sprite
-playerBluewalk4 = {
+playerBlueWalk4 : Sprite
+playerBlueWalk4 = {
     name: "playerBlue_walk4.png",
     x: 713,
     y: 157,
@@ -1839,8 +1839,8 @@ playerBluewalk4 = {
     height: 45,
 }
 
-playerBluewalk5 : Sprite
-playerBluewalk5 = {
+playerBlueWalk5 : Sprite
+playerBlueWalk5 = {
     name: "playerBlue_walk5.png",
     x: 585,
     y: 779,
@@ -1848,8 +1848,8 @@ playerBluewalk5 = {
     height: 40,
 }
 
-playerGreendead : Sprite
-playerGreendead = {
+playerGreenDead : Sprite
+playerGreenDead = {
     name: "playerGreen_dead.png",
     x: 890,
     y: 272,
@@ -1857,8 +1857,8 @@ playerGreendead = {
     height: 43,
 }
 
-playerGreenduck : Sprite
-playerGreenduck = {
+playerGreenDuck : Sprite
+playerGreenDuck = {
     name: "playerGreen_duck.png",
     x: 650,
     y: 573,
@@ -1866,8 +1866,8 @@ playerGreenduck = {
     height: 31,
 }
 
-playerGreenfall : Sprite
-playerGreenfall = {
+playerGreenFall : Sprite
+playerGreenFall = {
     name: "playerGreen_fall.png",
     x: 890,
     y: 316,
@@ -1875,8 +1875,8 @@ playerGreenfall = {
     height: 49,
 }
 
-playerGreenhit : Sprite
-playerGreenhit = {
+playerGreenHit : Sprite
+playerGreenHit = {
     name: "playerGreen_hit.png",
     x: 758,
     y: 689,
@@ -1884,8 +1884,8 @@ playerGreenhit = {
     height: 40,
 }
 
-playerGreenroll : Sprite
-playerGreenroll = {
+playerGreenRoll : Sprite
+playerGreenRoll = {
     name: "playerGreen_roll.png",
     x: 849,
     y: 599,
@@ -1893,8 +1893,8 @@ playerGreenroll = {
     height: 40,
 }
 
-playerGreenstand : Sprite
-playerGreenstand = {
+playerGreenStand : Sprite
+playerGreenStand = {
     name: "playerGreen_stand.png",
     x: 890,
     y: 0,
@@ -1902,8 +1902,8 @@ playerGreenstand = {
     height: 50,
 }
 
-playerGreenswim1 : Sprite
-playerGreenswim1 = {
+playerGreenSwim1 : Sprite
+playerGreenSwim1 = {
     name: "playerGreen_swim1.png",
     x: 849,
     y: 823,
@@ -1911,8 +1911,8 @@ playerGreenswim1 = {
     height: 53,
 }
 
-playerGreenswim2 : Sprite
-playerGreenswim2 = {
+playerGreenSwim2 : Sprite
+playerGreenSwim2 = {
     name: "playerGreen_swim2.png",
     x: 808,
     y: 92,
@@ -1920,8 +1920,8 @@ playerGreenswim2 = {
     height: 54,
 }
 
-playerGreenswitch1 : Sprite
-playerGreenswitch1 = {
+playerGreenSwitch1 : Sprite
+playerGreenSwitch1 = {
     name: "playerGreen_switch1.png",
     x: 707,
     y: 508,
@@ -1929,8 +1929,8 @@ playerGreenswitch1 = {
     height: 50,
 }
 
-playerGreenswitch2 : Sprite
-playerGreenswitch2 = {
+playerGreenSwitch2 : Sprite
+playerGreenSwitch2 = {
     name: "playerGreen_switch2.png",
     x: 707,
     y: 654,
@@ -1938,8 +1938,8 @@ playerGreenswitch2 = {
     height: 50,
 }
 
-playerGreenup1 : Sprite
-playerGreenup1 = {
+playerGreenUp1 : Sprite
+playerGreenUp1 = {
     name: "playerGreen_up1.png",
     x: 890,
     y: 51,
@@ -1947,8 +1947,8 @@ playerGreenup1 = {
     height: 50,
 }
 
-playerGreenup2 : Sprite
-playerGreenup2 = {
+playerGreenUp2 : Sprite
+playerGreenUp2 = {
     name: "playerGreen_up2.png",
     x: 849,
     y: 877,
@@ -1956,8 +1956,8 @@ playerGreenup2 = {
     height: 43,
 }
 
-playerGreenup3 : Sprite
-playerGreenup3 = {
+playerGreenUp3 : Sprite
+playerGreenUp3 = {
     name: "playerGreen_up3.png",
     x: 849,
     y: 429,
@@ -1965,8 +1965,8 @@ playerGreenup3 = {
     height: 39,
 }
 
-playerGreenwalk1 : Sprite
-playerGreenwalk1 = {
+playerGreenWalk1 : Sprite
+playerGreenWalk1 = {
     name: "playerGreen_walk1.png",
     x: 890,
     y: 366,
@@ -1974,8 +1974,8 @@ playerGreenwalk1 = {
     height: 50,
 }
 
-playerGreenwalk2 : Sprite
-playerGreenwalk2 = {
+playerGreenWalk2 : Sprite
+playerGreenWalk2 = {
     name: "playerGreen_walk2.png",
     x: 889,
     y: 963,
@@ -1983,8 +1983,8 @@ playerGreenwalk2 = {
     height: 48,
 }
 
-playerGreenwalk3 : Sprite
-playerGreenwalk3 = {
+playerGreenWalk3 : Sprite
+playerGreenWalk3 = {
     name: "playerGreen_walk3.png",
     x: 889,
     y: 877,
@@ -1992,8 +1992,8 @@ playerGreenwalk3 = {
     height: 48,
 }
 
-playerGreenwalk4 : Sprite
-playerGreenwalk4 = {
+playerGreenWalk4 : Sprite
+playerGreenWalk4 = {
     name: "playerGreen_walk4.png",
     x: 713,
     y: 259,
@@ -2001,8 +2001,8 @@ playerGreenwalk4 = {
     height: 43,
 }
 
-playerGreenwalk5 : Sprite
-playerGreenwalk5 = {
+playerGreenWalk5 : Sprite
+playerGreenWalk5 = {
     name: "playerGreen_walk5.png",
     x: 455,
     y: 642,
@@ -2010,8 +2010,8 @@ playerGreenwalk5 = {
     height: 39,
 }
 
-playerGreydead : Sprite
-playerGreydead = {
+playerGreyDead : Sprite
+playerGreyDead = {
     name: "playerGrey_dead.png",
     x: 890,
     y: 759,
@@ -2019,8 +2019,8 @@ playerGreydead = {
     height: 39,
 }
 
-playerGreyduck : Sprite
-playerGreyduck = {
+playerGreyDuck : Sprite
+playerGreyDuck = {
     name: "playerGrey_duck.png",
     x: 650,
     y: 808,
@@ -2028,8 +2028,8 @@ playerGreyduck = {
     height: 30,
 }
 
-playerGreyfall : Sprite
-playerGreyfall = {
+playerGreyFall : Sprite
+playerGreyFall = {
     name: "playerGrey_fall.png",
     x: 890,
     y: 616,
@@ -2037,8 +2037,8 @@ playerGreyfall = {
     height: 45,
 }
 
-playerGreyhit : Sprite
-playerGreyhit = {
+playerGreyHit : Sprite
+playerGreyHit = {
     name: "playerGrey_hit.png",
     x: 710,
     y: 427,
@@ -2046,8 +2046,8 @@ playerGreyhit = {
     height: 36,
 }
 
-playerGreyroll : Sprite
-playerGreyroll = {
+playerGreyRoll : Sprite
+playerGreyRoll = {
     name: "playerGrey_roll.png",
     x: 890,
     y: 102,
@@ -2055,8 +2055,8 @@ playerGreyroll = {
     height: 36,
 }
 
-playerGreystand : Sprite
-playerGreystand = {
+playerGreyStand : Sprite
+playerGreyStand = {
     name: "playerGrey_stand.png",
     x: 890,
     y: 799,
@@ -2064,8 +2064,8 @@ playerGreystand = {
     height: 45,
 }
 
-playerGreyswim1 : Sprite
-playerGreyswim1 = {
+playerGreySwim1 : Sprite
+playerGreySwim1 = {
     name: "playerGrey_swim1.png",
     x: 805,
     y: 823,
@@ -2073,8 +2073,8 @@ playerGreyswim1 = {
     height: 41,
 }
 
-playerGreyswim2 : Sprite
-playerGreyswim2 = {
+playerGreySwim2 : Sprite
+playerGreySwim2 = {
     name: "playerGrey_swim2.png",
     x: 805,
     y: 656,
@@ -2082,8 +2082,8 @@ playerGreyswim2 = {
     height: 42,
 }
 
-playerGreyswitch1 : Sprite
-playerGreyswitch1 = {
+playerGreySwitch1 : Sprite
+playerGreySwitch1 = {
     name: "playerGrey_switch1.png",
     x: 707,
     y: 705,
@@ -2091,8 +2091,8 @@ playerGreyswitch1 = {
     height: 45,
 }
 
-playerGreyswitch2 : Sprite
-playerGreyswitch2 = {
+playerGreySwitch2 : Sprite
+playerGreySwitch2 = {
     name: "playerGrey_switch2.png",
     x: 707,
     y: 608,
@@ -2100,8 +2100,8 @@ playerGreyswitch2 = {
     height: 45,
 }
 
-playerGreyup1 : Sprite
-playerGreyup1 = {
+playerGreyUp1 : Sprite
+playerGreyUp1 = {
     name: "playerGrey_up1.png",
     x: 927,
     y: 578,
@@ -2109,8 +2109,8 @@ playerGreyup1 = {
     height: 45,
 }
 
-playerGreyup2 : Sprite
-playerGreyup2 = {
+playerGreyUp2 : Sprite
+playerGreyUp2 = {
     name: "playerGrey_up2.png",
     x: 890,
     y: 537,
@@ -2118,8 +2118,8 @@ playerGreyup2 = {
     height: 40,
 }
 
-playerGreyup3 : Sprite
-playerGreyup3 = {
+playerGreyUp3 : Sprite
+playerGreyUp3 = {
     name: "playerGrey_up3.png",
     x: 764,
     y: 55,
@@ -2127,8 +2127,8 @@ playerGreyup3 = {
     height: 36,
 }
 
-playerGreywalk1 : Sprite
-playerGreywalk1 = {
+playerGreyWalk1 : Sprite
+playerGreyWalk1 = {
     name: "playerGrey_walk1.png",
     x: 927,
     y: 791,
@@ -2136,8 +2136,8 @@ playerGreywalk1 = {
     height: 45,
 }
 
-playerGreywalk2 : Sprite
-playerGreywalk2 = {
+playerGreyWalk2 : Sprite
+playerGreyWalk2 = {
     name: "playerGrey_walk2.png",
     x: 890,
     y: 417,
@@ -2145,8 +2145,8 @@ playerGreywalk2 = {
     height: 43,
 }
 
-playerGreywalk3 : Sprite
-playerGreywalk3 = {
+playerGreyWalk3 : Sprite
+playerGreyWalk3 = {
     name: "playerGrey_walk3.png",
     x: 890,
     y: 494,
@@ -2154,8 +2154,8 @@ playerGreywalk3 = {
     height: 42,
 }
 
-playerGreywalk4 : Sprite
-playerGreywalk4 = {
+playerGreyWalk4 : Sprite
+playerGreyWalk4 = {
     name: "playerGrey_walk4.png",
     x: 713,
     y: 343,
@@ -2163,8 +2163,8 @@ playerGreywalk4 = {
     height: 36,
 }
 
-playerGreywalk5 : Sprite
-playerGreywalk5 = {
+playerGreyWalk5 : Sprite
+playerGreyWalk5 = {
     name: "playerGrey_walk5.png",
     x: 455,
     y: 682,
@@ -2172,8 +2172,8 @@ playerGreywalk5 = {
     height: 36,
 }
 
-playerReddead : Sprite
-playerReddead = {
+playerRedDead : Sprite
+playerRedDead = {
     name: "playerRed_dead.png",
     x: 850,
     y: 297,
@@ -2181,8 +2181,8 @@ playerReddead = {
     height: 46,
 }
 
-playerRedduck : Sprite
-playerRedduck = {
+playerRedDuck : Sprite
+playerRedDuck = {
     name: "playerRed_duck.png",
     x: 650,
     y: 773,
@@ -2190,8 +2190,8 @@ playerRedduck = {
     height: 34,
 }
 
-playerRedfall : Sprite
-playerRedfall = {
+playerRedFall : Sprite
+playerRedFall = {
     name: "playerRed_fall.png",
     x: 850,
     y: 699,
@@ -2199,8 +2199,8 @@ playerRedfall = {
     height: 50,
 }
 
-playerRedhit : Sprite
-playerRedhit = {
+playerRedHit : Sprite
+playerRedHit = {
     name: "playerRed_hit.png",
     x: 650,
     y: 646,
@@ -2208,8 +2208,8 @@ playerRedhit = {
     height: 38,
 }
 
-playerRedroll : Sprite
-playerRedroll = {
+playerRedRoll : Sprite
+playerRedRoll = {
     name: "playerRed_roll.png",
     x: 808,
     y: 251,
@@ -2217,8 +2217,8 @@ playerRedroll = {
     height: 40,
 }
 
-playerRedstand : Sprite
-playerRedstand = {
+playerRedStand : Sprite
+playerRedStand = {
     name: "playerRed_stand.png",
     x: 850,
     y: 518,
@@ -2226,8 +2226,8 @@ playerRedstand = {
     height: 48,
 }
 
-playerRedswim1 : Sprite
-playerRedswim1 = {
+playerRedSwim1 : Sprite
+playerRedSwim1 = {
     name: "playerRed_swim1.png",
     x: 757,
     y: 925,
@@ -2235,8 +2235,8 @@ playerRedswim1 = {
     height: 50,
 }
 
-playerRedswim2 : Sprite
-playerRedswim2 = {
+playerRedSwim2 : Sprite
+playerRedSwim2 = {
     name: "playerRed_swim2.png",
     x: 715,
     y: 56,
@@ -2244,8 +2244,8 @@ playerRedswim2 = {
     height: 51,
 }
 
-playerRedswitch1 : Sprite
-playerRedswitch1 = {
+playerRedSwitch1 : Sprite
+playerRedSwitch1 = {
     name: "playerRed_switch1.png",
     x: 704,
     y: 950,
@@ -2253,8 +2253,8 @@ playerRedswitch1 = {
     height: 48,
 }
 
-playerRedswitch2 : Sprite
-playerRedswitch2 = {
+playerRedSwitch2 : Sprite
+playerRedSwitch2 = {
     name: "playerRed_switch2.png",
     x: 707,
     y: 559,
@@ -2262,8 +2262,8 @@ playerRedswitch2 = {
     height: 48,
 }
 
-playerRedup1 : Sprite
-playerRedup1 = {
+playerRedUp1 : Sprite
+playerRedUp1 = {
     name: "playerRed_up1.png",
     x: 850,
     y: 469,
@@ -2271,8 +2271,8 @@ playerRedup1 = {
     height: 48,
 }
 
-playerRedup2 : Sprite
-playerRedup2 = {
+playerRedUp2 : Sprite
+playerRedUp2 = {
     name: "playerRed_up2.png",
     x: 850,
     y: 0,
@@ -2280,8 +2280,8 @@ playerRedup2 = {
     height: 46,
 }
 
-playerRedup3 : Sprite
-playerRedup3 = {
+playerRedUp3 : Sprite
+playerRedUp3 = {
     name: "playerRed_up3.png",
     x: 650,
     y: 685,
@@ -2289,8 +2289,8 @@ playerRedup3 = {
     height: 38,
 }
 
-playerRedwalk1 : Sprite
-playerRedwalk1 = {
+playerRedWalk1 : Sprite
+playerRedWalk1 = {
     name: "playerRed_walk1.png",
     x: 850,
     y: 47,
@@ -2298,8 +2298,8 @@ playerRedwalk1 = {
     height: 48,
 }
 
-playerRedwalk2 : Sprite
-playerRedwalk2 = {
+playerRedWalk2 : Sprite
+playerRedWalk2 = {
     name: "playerRed_walk2.png",
     x: 850,
     y: 96,
@@ -2307,8 +2307,8 @@ playerRedwalk2 = {
     height: 45,
 }
 
-playerRedwalk3 : Sprite
-playerRedwalk3 = {
+playerRedWalk3 : Sprite
+playerRedWalk3 = {
     name: "playerRed_walk3.png",
     x: 849,
     y: 251,
@@ -2316,8 +2316,8 @@ playerRedwalk3 = {
     height: 45,
 }
 
-playerRedwalk4 : Sprite
-playerRedwalk4 = {
+playerRedWalk4 : Sprite
+playerRedWalk4 = {
     name: "playerRed_walk4.png",
     x: 710,
     y: 384,
@@ -2325,8 +2325,8 @@ playerRedwalk4 = {
     height: 42,
 }
 
-playerRedwalk5 : Sprite
-playerRedwalk5 = {
+playerRedWalk5 : Sprite
+playerRedWalk5 = {
     name: "playerRed_walk5.png",
     x: 130,
     y: 975,
@@ -2424,8 +2424,8 @@ signArrowTR = {
     height: 55,
 }
 
-signArrowdown : Sprite
-signArrowdown = {
+signArrowDown : Sprite
+signArrowDown = {
     name: "signArrow_down.png",
     x: 850,
     y: 750,
@@ -2433,8 +2433,8 @@ signArrowdown = {
     height: 58,
 }
 
-signArrowleft : Sprite
-signArrowleft = {
+signArrowLeft : Sprite
+signArrowLeft = {
     name: "signArrow_left.png",
     x: 715,
     y: 0,
@@ -2442,8 +2442,8 @@ signArrowleft = {
     height: 55,
 }
 
-signArrowright : Sprite
-signArrowright = {
+signArrowRight : Sprite
+signArrowRight = {
     name: "signArrow_right.png",
     x: 713,
     y: 203,
@@ -2451,8 +2451,8 @@ signArrowright = {
     height: 55,
 }
 
-signArrowup : Sprite
-signArrowup = {
+signArrowUp : Sprite
+signArrowUp = {
     name: "signArrow_up.png",
     x: 850,
     y: 640,
@@ -2505,8 +2505,8 @@ spikesLow = {
     height: 26,
 }
 
-switchGreenleft : Sprite
-switchGreenleft = {
+switchGreenLeft : Sprite
+switchGreenLeft = {
     name: "switchGreen_left.png",
     x: 757,
     y: 976,
@@ -2514,8 +2514,8 @@ switchGreenleft = {
     height: 47,
 }
 
-switchGreenmid : Sprite
-switchGreenmid = {
+switchGreenMid : Sprite
+switchGreenMid = {
     name: "switchGreen_mid.png",
     x: 961,
     y: 407,
@@ -2523,8 +2523,8 @@ switchGreenmid = {
     height: 58,
 }
 
-switchGreenoff : Sprite
-switchGreenoff = {
+switchGreenOff : Sprite
+switchGreenOff = {
     name: "switchGreen_off.png",
     x: 964,
     y: 577,
@@ -2532,8 +2532,8 @@ switchGreenoff = {
     height: 40,
 }
 
-switchGreenon : Sprite
-switchGreenon = {
+switchGreenOn : Sprite
+switchGreenOn = {
     name: "switchGreen_on.png",
     x: 963,
     y: 104,
@@ -2541,8 +2541,8 @@ switchGreenon = {
     height: 40,
 }
 
-switchGreenright : Sprite
-switchGreenright = {
+switchGreenRight : Sprite
+switchGreenRight = {
     name: "switchGreen_right.png",
     x: 758,
     y: 608,
@@ -2550,8 +2550,8 @@ switchGreenright = {
     height: 47,
 }
 
-switchRedleft : Sprite
-switchRedleft = {
+switchRedLeft : Sprite
+switchRedLeft = {
     name: "switchRed_left.png",
     x: 758,
     y: 876,
@@ -2559,8 +2559,8 @@ switchRedleft = {
     height: 47,
 }
 
-switchRedmid : Sprite
-switchRedmid = {
+switchRedMid : Sprite
+switchRedMid = {
     name: "switchRed_mid.png",
     x: 961,
     y: 348,
@@ -2568,8 +2568,8 @@ switchRedmid = {
     height: 58,
 }
 
-switchRedoff : Sprite
-switchRedoff = {
+switchRedOff : Sprite
+switchRedOff = {
     name: "switchRed_off.png",
     x: 963,
     y: 879,
@@ -2577,8 +2577,8 @@ switchRedoff = {
     height: 40,
 }
 
-switchRedon : Sprite
-switchRedon = {
+switchRedOn : Sprite
+switchRedOn = {
     name: "switchRed_on.png",
     x: 964,
     y: 618,
@@ -2586,8 +2586,8 @@ switchRedon = {
     height: 40,
 }
 
-switchRedright : Sprite
-switchRedright = {
+switchRedRight : Sprite
+switchRedRight = {
     name: "switchRed_right.png",
     x: 715,
     y: 108,
@@ -3576,8 +3576,8 @@ vine = {
     height: 64,
 }
 
-vinebottom : Sprite
-vinebottom = {
+vineBottom : Sprite
+vineBottom = {
     name: "vine_bottom.png",
     x: 989,
     y: 705,
@@ -3585,8 +3585,8 @@ vinebottom = {
     height: 38,
 }
 
-vinebottomAlt : Sprite
-vinebottomAlt = {
+vineBottomAlt : Sprite
+vineBottomAlt = {
     name: "vine_bottomAlt.png",
     x: 964,
     y: 659,

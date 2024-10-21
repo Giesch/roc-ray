@@ -1,11 +1,11 @@
 app [main, Model] {
-    ray: platform "../platform/main.roc",
+    ray: platform "../../platform/main.roc",
 }
 
 import ray.RocRay exposing [PlatformState, Texture, Rectangle]
 import ray.Keys
 
-import Platformer.Generated.Sprites as Sprites exposing [Sprite]
+import Generated.Sprites as Sprites exposing [Sprite]
 
 ### TODO
 ###
@@ -224,18 +224,18 @@ AnimationStep : (Sprite, U64)
 
 walkingLoop : List AnimationStep
 walkingLoop = [
-    (Sprites.playerGreenwalk1, 100),
-    (Sprites.playerGreenwalk2, 100),
-    (Sprites.playerGreenwalk3, 100),
-    (Sprites.playerGreenwalk2, 100),
+    (Sprites.playerGreenWalk1, 100),
+    (Sprites.playerGreenWalk2, 100),
+    (Sprites.playerGreenWalk3, 100),
+    (Sprites.playerGreenWalk2, 100),
 ]
 
 idlingLoop : List AnimationStep
 idlingLoop = [
-    (Sprites.playerGreenwalk1, 4_000),
-    (Sprites.playerGreenstand, 2_000),
-    (Sprites.playerGreenwalk1, 4_000),
-    (Sprites.playerGreenup1, 2_000),
+    (Sprites.playerGreenWalk1, 4_000),
+    (Sprites.playerGreenStand, 2_000),
+    (Sprites.playerGreenWalk1, 4_000),
+    (Sprites.playerGreenUp1, 2_000),
 ]
 
 ### LEVEL
@@ -248,4 +248,3 @@ idlingLoop = [
 #     List.repeat Green 8,
 #     List.repeat Green 8,
 # ]
-
