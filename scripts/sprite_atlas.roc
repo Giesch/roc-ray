@@ -40,18 +40,22 @@ main : Task {} _
 main =
     cwd = Env.cwd!
     # there has to be a better way to do this
-    xmlPath = Str.replaceFirst spriteSheetComplete "." (cwd |> Path.display)
-    imagePath = Str.replaceLast xmlPath ".xml" ".png"
+    absoluteXmlPath = Str.replaceFirst spriteSheetComplete "." (cwd |> Path.display)
+    absoluteImagePath = Str.replaceLast absoluteXmlPath ".xml" ".png"
 
-    imageExists = File.isFile! imagePath
+    imageExists = File.isFile! absoluteImagePath
     if imageExists then
-        run! { xmlPath, imagePath }
+        run! { absoluteXmlPath }
     else
-        Stderr.line! "no matching image found at: $(imagePath)"
+        Stderr.line! "no matching image found at: $(absoluteImagePath)"
 
-run : { xmlPath : Str, imagePath : Str } -> Task {} _
-run = \{ xmlPath, imagePath } ->
-    atlas = loadSpriteAtlas! xmlPath
+run : { absoluteXmlPath : Str } -> Task {} _
+run = \{ absoluteXmlPath } ->
+    atlas = loadSpriteAtlas! absoluteXmlPath
+    imagePath =
+        spriteSheetComplete
+        |> Str.replaceFirst "./" ""
+        |> Str.replaceLast ".xml" ".png"
     rocModule = generateRocModule { atlas, imagePath }
 
     File.writeUtf8! spriteSheetModulePath rocModule

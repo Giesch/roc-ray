@@ -367,7 +367,7 @@ import ray.RocRay exposing [Texture]
 
 ## the relative asset path to the sprite sheet image file
 imagePath : Str
-imagePath = "/home/danielknutson/Projects/roc-ray/examples/assets/kenney_abstract-platformer/Spritesheet/spritesheet_complete.png"
+imagePath = "examples/assets/kenney_abstract-platformer/Spritesheet/spritesheet_complete.png"
 
 load : Task Texture _
 load = RocRay.loadTexture imagePath
