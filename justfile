@@ -63,3 +63,10 @@ format file:
 [windows]
 format file:
     .\windows\bin\roc.exe format {{file}}
+
+
+# generate SpriteAtlas.roc for platformer example
+[unix]
+sprites:
+    ./scripts/sprite_atlas.roc
+    roc format examples/Platformer/Generated/SpriteAtlas.roc

@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TextureAtlas imagePath="sprites.png">
-	<!--
-	Created with ShoeBox
-	http://renderhjs.net/shoebox/
-	-->
 	<SubTexture name="blockBrown.png"	x="455"	y="849"	width="64"	height="64" frameX="-0" frameY="-0" frameWidth="64" frameHeight="64"/>
 	<SubTexture name="blockBrown_broken.png"	x="455"	y="914"	width="64"	height="64" frameX="-0" frameY="-0" frameWidth="64" frameHeight="64"/>
 	<SubTexture name="blockGreen.png"	x="520"	y="0"	width="64"	height="64" frameX="-0" frameY="-0" frameWidth="64" frameHeight="64"/>
