@@ -66,15 +66,59 @@ init =
 
     Task.ok model
 
+blueGreenGray = RGBA 240 255 245 255
+
 render : Model, PlatformState -> Task Model _
 render = \model, state ->
     newModel = update! model state
+    draw! newModel
+    Task.ok newModel
 
-    RocRay.beginDrawing! White
-    drawPlayer! newModel
+draw : Model -> Task {} _
+draw = \model ->
+    RocRay.beginDrawing! blueGreenGray
+    drawBackground! model
+    drawPlayer! model
     RocRay.endDrawing!
 
-    Task.ok newModel
+drawBackground : Model -> Task {} _
+drawBackground = \model ->
+    signPos = {
+        x: windowWidth / 2.0 + 60.0,
+        y: windowHeight / 2.0 - Num.toF32 Sprites.signArrow.height,
+    }
+    RocRay.drawTextureRec! {
+        source: Sprites.rect Sprites.signArrow,
+        tint: blueGreenGray,
+        pos: signPos,
+        texture: model.spriteSheet,
+    }
+
+    tileHeight = Sprites.tileGreen01.height
+    tileWidth = Sprites.tileGreen01.width
+
+    internalGround = Sprites.tileGreen03
+    # topRight = Sprites.tileGreen06
+    topMid = Sprites.tileGreen05
+    topLeft = Sprites.tileGreen04
+
+    groundRow = List.prepend (List.repeat topMid 12) topLeft
+    internalRow = List.repeat internalGround 13
+    rows = List.prepend (List.repeat internalRow 4) groundRow
+
+    indexedRows = List.mapWithIndex rows \row, r -> (row, r)
+    Task.forEach indexedRows \(row, r) ->
+        indexedTiles = List.mapWithIndex row \tile, i -> (tile, i)
+        Task.forEach indexedTiles \(tile, i) ->
+            x = tileWidth * Num.toF32 i
+            y = windowWidth / 2.0 - tileHeight + tileHeight * Num.toF32 r
+
+            RocRay.drawTextureRec {
+                pos: { x, y },
+                source: Sprites.rect tile,
+                tint: White,
+                texture: model.spriteSheet,
+            }
 
 update : Model, PlatformState -> Task Model _
 update = \model, state ->
@@ -145,7 +189,7 @@ playerFacing = \player ->
         Idle facing -> facing
         Walk facing -> facing
 
-# ANIMATION
+### ANIMATION
 
 animationFrame : Animation -> Sprite
 animationFrame = \animation ->
@@ -193,3 +237,15 @@ idlingLoop = [
     (Sprites.playerGreenwalk1, 4_000),
     (Sprites.playerGreenup1, 2_000),
 ]
+
+### LEVEL
+
+# level = [
+#     List.repeat Sky 8,
+#     List.repeat Sky 8,
+#     List.repeat Sky 8,
+#     List.repeat Green 8,
+#     List.repeat Green 8,
+#     List.repeat Green 8,
+# ]
+
