@@ -1,13 +1,13 @@
 hosted Effect
     exposes [
         Texture,
+        Sound,
         setWindowSize,
         getScreenSize,
         exit,
         drawText,
         measureText,
         setWindowTitle,
-        setBackgroundColor,
         drawLine,
         drawRectangle,
         drawRectangleGradientV,
@@ -19,13 +19,16 @@ hosted Effect
         takeScreenshot,
         createCamera,
         updateCamera,
+        beginDrawing,
+        endDrawing,
         beginMode2D,
         endMode2D,
         log,
         toLogLevel,
         loadTexture,
         drawTextureRec,
-        loadFileToStr,
+        loadSound,
+        playSound,
     ]
     imports []
 
@@ -56,7 +59,6 @@ drawText : RocVector2, I32, Str, RocColor -> Task {} {}
 measureText : Str, I32 -> Task I64 {}
 
 setWindowTitle : Str -> Task {} {}
-setBackgroundColor : RocColor -> Task {} {}
 
 drawLine : RocVector2, RocVector2, RocColor -> Task {} {}
 
@@ -71,9 +73,11 @@ setDrawFPS : Bool, I32, I32 -> Task {} {}
 
 takeScreenshot : Str -> Task {} {}
 
-createCamera : F32, F32, F32, F32, F32, F32 -> Task U64 {}
-updateCamera : U64, F32, F32, F32, F32, F32, F32 -> Task {} {}
+createCamera : RocVector2, RocVector2, F32, F32 -> Task U64 {}
+updateCamera : U64, RocVector2, RocVector2, F32, F32 -> Task {} {}
 
+beginDrawing : RocColor -> Task {} {}
+endDrawing : Task {} {}
 beginMode2D : U64 -> Task {} {}
 endMode2D : U64 -> Task {} {}
 
@@ -81,4 +85,6 @@ Texture := Box {}
 loadTexture : Str -> Task Texture Str
 drawTextureRec : Texture, RocRectangle, RocVector2, RocColor -> Task {} {}
 
-loadFileToStr : Str -> Task Str Str
+Sound := Box {}
+loadSound : Str -> Task Sound Str
+playSound : Sound -> Task {} {}

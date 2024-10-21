@@ -7,9 +7,9 @@ module [
     Vector2,
     Camera,
     Texture,
+    Sound,
     setWindowSize,
     getScreenSize,
-    setBackgroundColor,
     exit,
     setWindowTitle,
     setTargetFPS,
@@ -30,7 +30,10 @@ module [
     log,
     loadTexture,
     drawTextureRec,
-    loadFileToStr,
+    loadSound,
+    playSound,
+    beginDrawing,
+    endDrawing,
 ]
 
 import RocRay.Keys as Keys
@@ -60,6 +63,7 @@ PlatformState : {
     mouse : {
         position : Vector2,
         buttons : Mouse.Buttons,
+        wheel : F32,
     },
 }
 
@@ -104,6 +108,8 @@ Color : [
 
 Texture : Effect.Texture
 
+Sound : Effect.Sound
+
 rgba : Color -> InternalColor.RocColor
 rgba = \color ->
     when color is
@@ -138,6 +144,14 @@ log : Str, [LogAll, LogTrace, LogDebug, LogInfo, LogWarning, LogError, LogFatal,
 log = \message, level ->
     Effect.log message (Effect.toLogLevel level)
     |> Task.mapErr \{} -> crash "unreachable log"
+
+beginDrawing : Color -> Task {} *
+beginDrawing = \color ->
+    Effect.beginDrawing (rgba color)
+    |> Task.mapErr \{} -> crash "unreachable beginDrawing"
+
+endDrawing : Task {} *
+endDrawing = Effect.endDrawing |> Task.mapErr \{} -> crash "unreachable endDrawing"
 
 ## Set the window title.
 setWindowTitle : Str -> Task {} *
@@ -177,12 +191,6 @@ setDrawFPS = \{ fps, posX ? 10, posY ? 10 } ->
 
     Effect.setDrawFPS showFps posX posY
     |> Task.mapErr \{} -> crash "unreachable setDrawFPS"
-
-## Set the background color to clear the window between each frame.
-setBackgroundColor : Color -> Task {} *
-setBackgroundColor = \color ->
-    Effect.setBackgroundColor (rgba color)
-    |> Task.mapErr \{} -> crash "unreachable setBackgroundColor"
 
 ## Measure the width of a text string using the default font.
 measureText : { text : Str, size : I32 } -> Task I64 *
@@ -257,13 +265,13 @@ Camera := U64
 
 createCamera : { target : Vector2, offset : Vector2, rotation : F32, zoom : F32 } -> Task Camera *
 createCamera = \{ target, offset, rotation, zoom } ->
-    Effect.createCamera target.x target.y offset.x offset.y rotation zoom
+    Effect.createCamera (InternalVector.fromVector2 target) (InternalVector.fromVector2 offset) rotation zoom
     |> Task.map \camera -> @Camera camera
     |> Task.mapErr \{} -> crash "unreachable createCamera"
 
 updateCamera : Camera, { target : Vector2, offset : Vector2, rotation : F32, zoom : F32 } -> Task {} *
 updateCamera = \@Camera camera, { target, offset, rotation, zoom } ->
-    Effect.updateCamera camera target.x target.y offset.x offset.y rotation zoom
+    Effect.updateCamera camera (InternalVector.fromVector2 target) (InternalVector.fromVector2 offset) rotation zoom
     |> Task.mapErr \{} -> crash "unreachable updateCamera"
 
 drawMode2D : Camera, Task {} err -> Task {} err
@@ -304,7 +312,12 @@ drawTextureRec = \{ texture, source, pos, tint } ->
     Effect.drawTextureRec texture (InternalRectangle.fromRect source) (InternalVector.fromVector2 pos) (rgba tint)
     |> Task.mapErr \{} -> crash "unreachable drawTextureRec"
 
-loadFileToStr : Str -> Task Str *
-loadFileToStr = \path ->
-    Effect.loadFileToStr path
-    |> Task.mapErr \_ -> crash "failed to load file"
+loadSound : Str -> Task Sound [LoadSoundErr Str]
+loadSound = \path ->
+    Effect.loadSound path
+    |> Task.mapErr \err -> LoadSoundErr err
+
+playSound : Sound -> Task {} *
+playSound = \sound ->
+    Effect.playSound sound
+    |> Task.mapErr \{} -> crash "unreachable Sound.play"
