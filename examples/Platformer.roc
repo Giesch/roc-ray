@@ -12,14 +12,8 @@ main = { init, render }
 
 Model : {
     spriteSheet : Texture,
-    sprites : Sprites,
     player : Player,
     timestampMillis : U64,
-}
-
-Sprites : {
-    walk : List Sprite,
-    stand : List Sprite,
 }
 
 Player : {
@@ -48,23 +42,6 @@ init =
 
     spriteSheet = SpriteAtlas.load!
 
-    stand : List Sprite
-    stand = [
-        SpriteAtlas.playerGreenwalk1,
-        SpriteAtlas.playerGreenstand,
-        SpriteAtlas.playerGreenup1,
-    ]
-
-    walk : List Sprite
-    walk = [
-        SpriteAtlas.playerGreenwalk1,
-        SpriteAtlas.playerGreenwalk2,
-        SpriteAtlas.playerGreenwalk3,
-    ]
-
-    sprites : Sprites
-    sprites = { walk, stand }
-
     model : Model
     model = {
         spriteSheet,
@@ -74,7 +51,6 @@ init =
             intent: Idle Right,
             animation: Standing 0,
         },
-        sprites,
         timestampMillis: 0,
     }
 
