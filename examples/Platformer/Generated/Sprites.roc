@@ -2,6 +2,7 @@ module [
     Sprite,
     imagePath,
     load,
+    rect,
     blockBrown,
     blockBrownbroken,
     blockGreen,
@@ -363,14 +364,22 @@ module [
     yellowJewel,
 ]
 
-import ray.RocRay exposing [Texture]
+import ray.RocRay exposing [Texture, Rectangle]
 
 ## the relative asset path to the sprite sheet image file
 imagePath : Str
-imagePath = "examples/assets/kenney_abstract-platformer/Spritesheet/spritesheet_complete.png"
+imagePath =
+    "examples/assets/kenney_abstract-platformer/Spritesheet/spritesheet_complete.png"
 
+## load the spritesheet
 load : Task Texture _
-load = RocRay.loadTexture imagePath
+load =
+    RocRay.loadTexture imagePath
+
+## remove non-rectangle attribute(s)
+rect : Sprite -> Rectangle
+rect = \{ x, y, width, height } ->
+    { x, y, width, height }
 
 ## an offset to an image in the sprite sheet
 Sprite : {

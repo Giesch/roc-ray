@@ -20,7 +20,7 @@ import parser.String
 spriteSheetComplete =
     "./examples/assets/kenney_abstract-platformer/Spritesheet/spritesheet_complete.xml"
 spriteSheetModulePath =
-    "./examples/Platformer/Generated/SpriteAtlas.roc"
+    "./examples/Platformer/Generated/Sprites.roc"
 
 # ShoeBox XML TextureAtlas
 TextureAtlas : {
@@ -60,7 +60,7 @@ run = \{ absoluteXmlPath } ->
 
     File.writeUtf8! spriteSheetModulePath rocModule
 
-    Stdout.line! "SpriteAtlas.roc written to $(spriteSheetModulePath)"
+    Stdout.line! "sprite atlas written to $(spriteSheetModulePath)"
 
 generateRocModule : { atlas : TextureAtlas, imagePath : Str } -> Str
 generateRocModule = \{ atlas, imagePath } ->
@@ -99,17 +99,26 @@ generateRocModule = \{ atlas, imagePath } ->
         Sprite,
         imagePath,
         load,
+        rect,
         $(spriteExports)
     ]
 
-    import ray.RocRay exposing [Texture]
+    import ray.RocRay exposing [Texture, Rectangle]
 
     ## the relative asset path to the sprite sheet image file
     imagePath : Str
-    imagePath = "$(imagePath)"
+    imagePath =
+        "$(imagePath)"
 
+    ## load the spritesheet
     load : Task Texture _
-    load = RocRay.loadTexture imagePath
+    load =
+        RocRay.loadTexture imagePath
+
+    ## remove non-rectangle attribute(s)
+    rect : Sprite -> Rectangle
+    rect = \\{ x, y, width, height } ->
+        { x, y, width, height }
 
     ## an offset to an image in the sprite sheet
     Sprite : {

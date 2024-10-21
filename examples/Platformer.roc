@@ -5,7 +5,17 @@ app [main, Model] {
 import ray.RocRay exposing [PlatformState, Texture, Rectangle]
 import ray.RocRay.Keys as Keys
 
-import Platformer.Generated.SpriteAtlas as SpriteAtlas exposing [Sprite]
+import Platformer.Generated.Sprites as Sprites exposing [Sprite]
+
+### TODO
+###
+### add a camera & background
+### make a level (code only)
+### start porting physics
+###
+### audio (music?)
+### web build?
+### level editor (in pause screen?)
 
 main : RocRay.Program Model _
 main = { init, render }
@@ -40,7 +50,7 @@ init =
     RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
     RocRay.setWindowTitle! "Platformer Example"
 
-    spriteSheet = SpriteAtlas.load!
+    spriteSheet = Sprites.load!
 
     model : Model
     model = {
@@ -116,12 +126,12 @@ drawPlayer = \model ->
             Right -> rect
             Left -> { rect & width: -rect.width }
 
-    sprite = animate model.player.animation
+    sprite = animationFrame model.player.animation
 
     source : Rectangle
     source =
         sprite
-        |> minusName
+        |> Sprites.rect
         |> flipFacing
 
     texture = model.spriteSheet
@@ -135,13 +145,10 @@ playerFacing = \player ->
         Idle facing -> facing
         Walk facing -> facing
 
-minusName : Sprite -> Rectangle
-minusName = \{ x, y, width, height } -> { x, y, width, height }
-
 # ANIMATION
 
-animate : Animation -> Sprite
-animate = \animation ->
+animationFrame : Animation -> Sprite
+animationFrame = \animation ->
     totalDuration : U64
     totalDuration =
         steps
@@ -150,8 +157,8 @@ animate = \animation ->
 
     (totalElapsed, steps) =
         when animation is
-            Standing elapsed -> (elapsed, idlingAnimation)
-            Walking elapsed -> (elapsed, walkingAnimation)
+            Standing elapsed -> (elapsed, idlingLoop)
+            Walking elapsed -> (elapsed, walkingLoop)
 
     offset = totalElapsed % totalDuration
 
@@ -166,23 +173,23 @@ animate = \animation ->
 
     when chosenSprite is
         Ok sprite -> sprite
-        Err _ -> crash "bug in sprite animation steps"
+        Err None -> crash "bug in sprite animation steps"
 
 # sprite and duration in milliseconds
 AnimationStep : (Sprite, U64)
 
-walkingAnimation : List AnimationStep
-walkingAnimation = [
-    (SpriteAtlas.playerGreenwalk1, 75),
-    (SpriteAtlas.playerGreenwalk2, 75),
-    (SpriteAtlas.playerGreenwalk3, 75),
-    (SpriteAtlas.playerGreenwalk2, 75),
+walkingLoop : List AnimationStep
+walkingLoop = [
+    (Sprites.playerGreenwalk1, 100),
+    (Sprites.playerGreenwalk2, 100),
+    (Sprites.playerGreenwalk3, 100),
+    (Sprites.playerGreenwalk2, 100),
 ]
 
-idlingAnimation : List AnimationStep
-idlingAnimation = [
-    (SpriteAtlas.playerGreenwalk1, 4_000),
-    (SpriteAtlas.playerGreenstand, 2_000),
-    (SpriteAtlas.playerGreenwalk1, 4_000),
-    (SpriteAtlas.playerGreenup1, 2_000),
+idlingLoop : List AnimationStep
+idlingLoop = [
+    (Sprites.playerGreenwalk1, 4_000),
+    (Sprites.playerGreenstand, 2_000),
+    (Sprites.playerGreenwalk1, 4_000),
+    (Sprites.playerGreenup1, 2_000),
 ]

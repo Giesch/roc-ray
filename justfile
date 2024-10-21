@@ -84,4 +84,4 @@ format file:
 [unix]
 sprites:
     ./scripts/sprite_atlas.roc
-    roc format examples/Platformer/Generated/SpriteAtlas.roc
+    roc format examples/Platformer/Generated/Sprites.roc
