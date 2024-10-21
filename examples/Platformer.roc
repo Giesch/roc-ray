@@ -3,7 +3,7 @@ app [main, Model] {
 }
 
 import ray.RocRay exposing [PlatformState, Texture, Rectangle]
-import ray.RocRay.Keys as Keys
+import ray.Keys
 
 import Platformer.Generated.Sprites as Sprites exposing [Sprite]
 
