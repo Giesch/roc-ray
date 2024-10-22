@@ -24,6 +24,7 @@ Model : {
     screen : [Playing, Paused],
     player : Player,
     spriteSheet : Texture,
+    level : Level,
     timestampMillis : U64,
 }
 
@@ -44,6 +45,7 @@ Animation : [
 
 windowWidth = 800
 windowHeight = 600
+tileSize = 64
 
 init : Task Model _
 init =
@@ -54,24 +56,31 @@ init =
     RocRay.setDrawFPS! { fps: Visible }
 
     spriteSheet = Sprites.load!
+    level = loadLevel!
 
     model : Model
-    model = newGame { spriteSheet }
+    model = newGame { spriteSheet, level }
 
     Task.ok model
 
-newGame : { spriteSheet : Texture } -> Model
-newGame = \{ spriteSheet } -> {
-    screen: Playing,
-    timestampMillis: 0,
-    spriteSheet,
-    player: {
-        x: windowWidth / 2.0,
-        y: windowHeight / 2.0,
-        intent: Idle Right,
-        animation: Standing 0,
-    },
-}
+newGame : { spriteSheet : Texture, level : Level } -> Model
+newGame = \{ spriteSheet, level } ->
+    # TODO get this out of the level
+    playerX = Num.toF32 (3 * tileSize)
+    playerY = Num.toF32 (5 * tileSize) - Sprites.playerGreenStand.height
+
+    {
+        screen: Playing,
+        timestampMillis: 0,
+        spriteSheet,
+        level,
+        player: {
+            x: playerX,
+            y: playerY,
+            intent: Idle Right,
+            animation: Standing 0,
+        },
+    }
 
 blueGreenGray = RGBA 240 255 245 255
 
@@ -89,10 +98,34 @@ draw = \model ->
     RocRay.endDrawing!
 
 drawBackground : Model -> Task {} _
-drawBackground = \{ spriteSheet } ->
+drawBackground = \{ spriteSheet, level } ->
+    grid : List (List _)
+    grid =
+        List.mapWithIndex level \row, r ->
+            List.mapWithIndex row \tile, c ->
+                when spriteForTile tile is
+                    Err None -> Err None
+                    Ok sprite ->
+                        Ok {
+                            sprite,
+                            spriteSheet,
+                            tint: blueGreenGray,
+                            pos: {
+                                x: Num.toF32 (tileSize * c),
+                                y: Num.toF32 (tileSize * r),
+                            },
+                        }
+
+    gridSpritesToDraw =
+        grid
+        |> List.join
+        |> List.keepOks \id -> id
+
+    Task.forEach! gridSpritesToDraw drawSprite
+
     signPos = {
         x: windowWidth / 2.0 + 60.0,
-        y: windowHeight / 2.0 - 20.0,
+        y: windowHeight / 2.0 - 40.0,
     }
     drawSprite! {
         sprite: Sprites.signArrow,
@@ -100,33 +133,6 @@ drawBackground = \{ spriteSheet } ->
         pos: signPos,
         spriteSheet,
     }
-
-    RocRay.drawText! {
-        text: "press enter to pause",
-        pos: { x: 200, y: 200 },
-        size: 20,
-        color: Black,
-    }
-
-    tileHeight = Sprites.tileGreen01.height
-    tileWidth = Sprites.tileGreen01.width
-
-    topLeft = Sprites.tileGreen04
-    topMid = Sprites.tileGreen05
-    # topRight = Sprites.tileGreen06
-    internalGround = Sprites.tileGreen03
-
-    groundRow = List.prepend (List.repeat topMid 12) topLeft
-    internalRow = List.repeat internalGround 13
-    rows = List.prepend (List.repeat internalRow 4) groundRow
-
-    indexedRows = List.mapWithIndex rows \row, r -> (row, r)
-    Task.forEach indexedRows \(row, r) ->
-        indexedTiles = List.mapWithIndex row \sprite, i -> (sprite, i)
-        Task.forEach indexedTiles \(sprite, i) ->
-            x = tileWidth * Num.toF32 i
-            y = windowWidth / 2.0 - tileHeight + tileHeight * Num.toF32 r
-            drawSprite! { pos: { x, y }, tint: White, sprite, spriteSheet }
 
 update : Model, PlatformState -> Task Model _
 update = \model, state ->
@@ -252,11 +258,41 @@ idlingLoop = [
 
 ### LEVEL
 
-# level = [
-#     List.repeat Sky 8,
-#     List.repeat Sky 8,
-#     List.repeat Sky 8,
-#     List.repeat Green 8,
-#     List.repeat Green 8,
-#     List.repeat Green 8,
-# ]
+loadLevel : Task Level _
+loadLevel =
+    text = RocRay.readFileToStr! "examples/assets/platformer/level.txt"
+
+    toTile : U8 -> Tile
+    toTile = \ch ->
+        when ch is
+            'P' -> PlayerStart
+            'S' -> BlankSky
+            '4' -> Green4
+            '5' -> Green5
+            '3' -> Green3
+            c -> crash "unrecognized character: $(Inspect.toStr c)"
+
+    lines = Str.split text "\n"
+    rows = List.map lines \line ->
+        bytes = Str.toUtf8 line
+        List.map bytes toTile
+
+    Task.ok rows
+
+Level : List (List Tile)
+Tile : [
+    PlayerStart,
+    BlankSky,
+    Green4,
+    Green5,
+    Green3,
+]
+
+spriteForTile : Tile -> Result Sprite [None]
+spriteForTile = \tile ->
+    when tile is
+        PlayerStart -> Err None
+        BlankSky -> Err None
+        Green4 -> Ok Sprites.tileGreen04
+        Green5 -> Ok Sprites.tileGreen05
+        Green3 -> Ok Sprites.tileGreen03
