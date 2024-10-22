@@ -161,15 +161,16 @@ update = \model, state ->
 
 readInput : Player, PlatformState -> Task Intent _
 readInput = \player, { keys } ->
-    newPlayer =
-        if Keys.anyDown keys [KeyLeft, KeyA] then
-            Walk Left
-        else if Keys.anyDown keys [KeyRight, KeyD] then
-            Walk Right
-        else
-            Idle (playerFacing player)
+    left = if Keys.anyDown keys [KeyLeft, KeyA] then Down else Up
+    right = if Keys.anyDown keys [KeyRight, KeyD] then Down else Up
 
-    Task.ok newPlayer
+    intent =
+        when (left, right) is
+            (Down, Up) -> Walk Left
+            (Up, Down) -> Walk Right
+            _same -> Idle (playerFacing player)
+
+    Task.ok intent
 
 drawPlayer : Model -> Task {} _
 drawPlayer = \model ->

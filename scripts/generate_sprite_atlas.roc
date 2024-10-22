@@ -21,7 +21,7 @@ import ascii.Char
 # https://roc.zulipchat.com/#narrow/channel/231634-beginners/topic/How.20to.20enable.20dbg.3F/near/473415831
 # these paths could potentially move to the justfile if that's fixed
 spriteSheetComplete =
-    "./examples/assets/kenney_abstract-platformer/Spritesheet/spritesheet_complete.xml"
+    "./examples/assets/platformer/spritesheet_complete.xml"
 spriteSheetModulePath =
     "./examples/platformer/Generated/Sprites.roc"
 

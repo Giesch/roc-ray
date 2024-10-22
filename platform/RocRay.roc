@@ -35,6 +35,8 @@ module [
     playSound,
     beginDrawing,
     endDrawing,
+    readFileToStr,
+    readFileToBytes,
 ]
 
 import Mouse

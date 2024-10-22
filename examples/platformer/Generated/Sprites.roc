@@ -369,7 +369,7 @@ import ray.RocRay exposing [Texture, Rectangle]
 ## the relative asset path to the sprite sheet image file
 imagePath : Str
 imagePath =
-    "examples/assets/kenney_abstract-platformer/Spritesheet/spritesheet_complete.png"
+    "examples/assets/platformer/spritesheet_complete.png"
 
 ## load the sprite sheet as a raylib texture
 load : Task Texture _
