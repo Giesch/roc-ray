@@ -197,9 +197,7 @@ drawPlayer = \model ->
 
 drawSprite : { sprite : Sprite, spriteSheet : Texture, pos : Vector2, tint : Color } -> Task {} _
 drawSprite = \{ sprite, spriteSheet, pos, tint } ->
-    source = Sprites.rect sprite
-    texture = spriteSheet
-    RocRay.drawTextureRec { source, texture, pos, tint }
+    RocRay.drawTextureRec { source: sprite, texture: spriteSheet, pos, tint }
 
 playerFacing : Player -> Facing
 playerFacing = \player ->
