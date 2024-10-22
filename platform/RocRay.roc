@@ -422,3 +422,13 @@ playSound : Sound -> Task {} *
 playSound = \sound ->
     Effect.playSound sound
     |> Task.mapErr \{} -> crash "unreachable Sound.play"
+
+readFileToStr : Str -> Task Str *
+readFileToStr = \path ->
+    Effect.readFileToStr path
+    |> Task.mapErr \{} -> crash "unreachable readFileToStr"
+
+readFileToBytes : Str -> Task (List U8) *
+readFileToBytes = \path ->
+    Effect.readFileToBytes path
+    |> Task.mapErr \{} -> crash "unreachable readFileToBytes"

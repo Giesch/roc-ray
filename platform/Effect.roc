@@ -30,6 +30,8 @@ hosted Effect
         drawTextureRec,
         loadSound,
         playSound,
+        readFileToStr,
+        readFileToBytes,
     ]
     imports []
 
@@ -91,3 +93,6 @@ drawTextureRec : Texture, RocRectangle, RocVector2, RocColor -> Task {} {}
 Sound := Box {}
 loadSound : Str -> Task Sound {}
 playSound : Sound -> Task {} {}
+
+readFileToStr : Str -> Task Str {}
+readFileToBytes : Str -> Task (List U8) {}

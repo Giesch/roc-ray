@@ -2,7 +2,7 @@ app [main, Model] {
     ray: platform "../../platform/main.roc",
 }
 
-import ray.RocRay exposing [PlatformState, Texture, Rectangle]
+import ray.RocRay exposing [PlatformState, Texture, Vector2, Color]
 import ray.Keys
 
 import Generated.Sprites as Sprites exposing [Sprite]
@@ -21,8 +21,9 @@ main : RocRay.Program Model _
 main = { init, render }
 
 Model : {
-    spriteSheet : Texture,
+    screen : [Playing, Paused],
     player : Player,
+    spriteSheet : Texture,
     timestampMillis : U64,
 }
 
@@ -50,21 +51,27 @@ init =
     RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
     RocRay.setWindowTitle! "Platformer Example"
 
+    RocRay.setDrawFPS! { fps: Visible }
+
     spriteSheet = Sprites.load!
 
     model : Model
-    model = {
-        spriteSheet,
-        player: {
-            x: windowWidth / 2.0,
-            y: windowHeight / 2.0,
-            intent: Idle Right,
-            animation: Standing 0,
-        },
-        timestampMillis: 0,
-    }
+    model = newGame { spriteSheet }
 
     Task.ok model
+
+newGame : { spriteSheet : Texture } -> Model
+newGame = \{ spriteSheet } -> {
+    screen: Playing,
+    timestampMillis: 0,
+    spriteSheet,
+    player: {
+        x: windowWidth / 2.0,
+        y: windowHeight / 2.0,
+        intent: Idle Right,
+        animation: Standing 0,
+    },
+}
 
 blueGreenGray = RGBA 240 255 245 255
 
@@ -82,25 +89,32 @@ draw = \model ->
     RocRay.endDrawing!
 
 drawBackground : Model -> Task {} _
-drawBackground = \model ->
+drawBackground = \{ spriteSheet } ->
     signPos = {
         x: windowWidth / 2.0 + 60.0,
-        y: windowHeight / 2.0 - Num.toF32 Sprites.signArrow.height,
+        y: windowHeight / 2.0 - 20.0,
     }
-    RocRay.drawTextureRec! {
-        source: Sprites.rect Sprites.signArrow,
+    drawSprite! {
+        sprite: Sprites.signArrow,
         tint: blueGreenGray,
         pos: signPos,
-        texture: model.spriteSheet,
+        spriteSheet,
+    }
+
+    RocRay.drawText! {
+        text: "press enter to pause",
+        pos: { x: 200, y: 200 },
+        size: 20,
+        color: Black,
     }
 
     tileHeight = Sprites.tileGreen01.height
     tileWidth = Sprites.tileGreen01.width
 
-    internalGround = Sprites.tileGreen03
-    # topRight = Sprites.tileGreen06
-    topMid = Sprites.tileGreen05
     topLeft = Sprites.tileGreen04
+    topMid = Sprites.tileGreen05
+    # topRight = Sprites.tileGreen06
+    internalGround = Sprites.tileGreen03
 
     groundRow = List.prepend (List.repeat topMid 12) topLeft
     internalRow = List.repeat internalGround 13
@@ -108,17 +122,11 @@ drawBackground = \model ->
 
     indexedRows = List.mapWithIndex rows \row, r -> (row, r)
     Task.forEach indexedRows \(row, r) ->
-        indexedTiles = List.mapWithIndex row \tile, i -> (tile, i)
-        Task.forEach indexedTiles \(tile, i) ->
+        indexedTiles = List.mapWithIndex row \sprite, i -> (sprite, i)
+        Task.forEach indexedTiles \(sprite, i) ->
             x = tileWidth * Num.toF32 i
             y = windowWidth / 2.0 - tileHeight + tileHeight * Num.toF32 r
-
-            RocRay.drawTextureRec {
-                pos: { x, y },
-                source: Sprites.rect tile,
-                tint: White,
-                texture: model.spriteSheet,
-            }
+            drawSprite! { pos: { x, y }, tint: White, sprite, spriteSheet }
 
 update : Model, PlatformState -> Task Model _
 update = \model, state ->
@@ -170,17 +178,20 @@ drawPlayer = \model ->
             Right -> rect
             Left -> { rect & width: -rect.width }
 
-    sprite = animationFrame model.player.animation
-
-    source : Rectangle
-    source =
-        sprite
-        |> Sprites.rect
+    sprite : Sprite
+    sprite =
+        model.player.animation
+        |> animationFrame
         |> flipFacing
 
-    texture = model.spriteSheet
     pos = { x: model.player.x, y: model.player.y }
-    tint = White
+
+    drawSprite { sprite, pos, spriteSheet: model.spriteSheet, tint: White }
+
+drawSprite : { sprite : Sprite, spriteSheet : Texture, pos : Vector2, tint : Color } -> Task {} _
+drawSprite = \{ sprite, spriteSheet, pos, tint } ->
+    source = Sprites.rect sprite
+    texture = spriteSheet
     RocRay.drawTextureRec { source, texture, pos, tint }
 
 playerFacing : Player -> Facing

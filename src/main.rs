@@ -609,3 +609,25 @@ unsafe extern "C" fn roc_fx_drawTextureRec(
 
     RocResult::ok(())
 }
+
+#[no_mangle]
+unsafe extern "C" fn roc_fx_readFileToStr(path: &RocStr) -> RocResult<RocStr, ()> {
+    let path = path.as_str();
+    let Ok(contents) = std::fs::read_to_string(path) else {
+        panic!("file not found: {path}");
+    };
+    let contents = RocStr::from_slice_unchecked(contents.as_bytes());
+
+    RocResult::ok(contents)
+}
+
+#[no_mangle]
+unsafe extern "C" fn roc_fx_readFileToBytes(path: &RocStr) -> RocResult<RocList<u8>, ()> {
+    let path = path.as_str();
+    let Ok(bytes) = std::fs::read(path) else {
+        panic!("file not found: {path}");
+    };
+    let bytes = RocList::from_slice(&bytes);
+
+    RocResult::ok(bytes)
+}
