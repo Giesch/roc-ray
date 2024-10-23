@@ -101,22 +101,18 @@ draw = \model ->
 
 drawLevel : Model -> Task {} _
 drawLevel = \{ spriteSheet, level } ->
+    drawTileSpriteArgs : { sprite : Sprite, r : U64, c : U64 } -> _
+    drawTileSpriteArgs = \{ sprite, r, c } ->
+        x = Num.toF32 (tileSize * c)
+        y = Num.toF32 (tileSize * r)
+        { sprite, spriteSheet, tint: blueGreenGray, pos: { x, y } }
+
     grid : List (List _)
     grid =
         List.mapWithIndex level \row, r ->
             List.mapWithIndex row \tile, c ->
-                when spriteForTile tile is
-                    Err None -> Err None
-                    Ok sprite ->
-                        Ok {
-                            sprite,
-                            spriteSheet,
-                            tint: blueGreenGray,
-                            pos: {
-                                x: Num.toF32 (tileSize * c),
-                                y: Num.toF32 (tileSize * r),
-                            },
-                        }
+                Result.map (spriteForTile tile) \sprite ->
+                    drawTileSpriteArgs { sprite, r, c }
 
     gridSpritesToDraw =
         grid
@@ -138,7 +134,6 @@ update = \model, state ->
             Walk Right -> 1.0
             Walk Left -> -1.0
             Idle _facing -> 0.0
-    runSpeed = 0.5
 
     animation =
         when (intent, model.player.animation) is
@@ -147,12 +142,11 @@ update = \model, state ->
             (Walk _facing, Walking millis) -> Walking (millis + deltaMillis)
             (Walk _facing, _other) -> Walking 0
 
-    oldPlayer = model.player
-    newPlayer = { oldPlayer &
-        intent,
-        animation,
-        x: oldPlayer.x + xMove * runSpeed * deltaTime,
-    }
+    newPlayer =
+        oldPlayer = model.player
+        runSpeed = 0.5
+        x = oldPlayer.x + xMove * runSpeed * deltaTime
+        { oldPlayer & intent, animation, x }
 
     Task.ok { model & player: newPlayer, timestampMillis }
 
