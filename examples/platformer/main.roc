@@ -26,6 +26,8 @@ Model : {
     spriteSheet : Texture,
     level : Level,
     timestampMillis : U64,
+    windowWidth : F32,
+    windowHeight : F32,
 }
 
 Player : {
@@ -43,28 +45,26 @@ Animation : [
     Walking U64,
 ]
 
-windowWidth = 800
-windowHeight = 600
 tileSize = 64
 
 init : Task Model _
 init =
     RocRay.setTargetFPS! 60
-    RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
-    RocRay.setWindowTitle! "Platformer Example"
 
     RocRay.setDrawFPS! { fps: Visible }
 
     spriteSheet = Sprites.load!
     level = loadLevel!
+    windowWidth = 12 * tileSize
+    windowHeight = 10 * tileSize
 
-    model : Model
-    model = newGame { spriteSheet, level }
+    RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
+    RocRay.setWindowTitle! "Platformer Example"
 
-    Task.ok model
+    Task.ok (newGame { spriteSheet, level, windowWidth, windowHeight })
 
-newGame : { spriteSheet : Texture, level : Level } -> Model
-newGame = \{ spriteSheet, level } ->
+newGame : { spriteSheet : Texture, level : Level, windowWidth : F32, windowHeight : F32 } -> Model
+newGame = \{ spriteSheet, level, windowWidth, windowHeight } ->
     # TODO get this out of the level
     playerX = Num.toF32 (3 * tileSize)
     playerY = Num.toF32 (5 * tileSize) - Sprites.playerGreenStand.height
@@ -80,6 +80,8 @@ newGame = \{ spriteSheet, level } ->
             intent: Idle Right,
             animation: Standing 0,
         },
+        windowWidth,
+        windowHeight,
     }
 
 blueGreenGray = RGBA 240 255 245 255
@@ -93,12 +95,12 @@ render = \model, state ->
 draw : Model -> Task {} _
 draw = \model ->
     RocRay.beginDrawing! blueGreenGray
-    drawBackground! model
+    drawLevel! model
     drawPlayer! model
     RocRay.endDrawing!
 
-drawBackground : Model -> Task {} _
-drawBackground = \{ spriteSheet, level } ->
+drawLevel : Model -> Task {} _
+drawLevel = \{ spriteSheet, level } ->
     grid : List (List _)
     grid =
         List.mapWithIndex level \row, r ->
@@ -122,17 +124,6 @@ drawBackground = \{ spriteSheet, level } ->
         |> List.keepOks \id -> id
 
     Task.forEach! gridSpritesToDraw drawSprite
-
-    signPos = {
-        x: windowWidth / 2.0 + 60.0,
-        y: windowHeight / 2.0 - 40.0,
-    }
-    drawSprite! {
-        sprite: Sprites.signArrow,
-        tint: blueGreenGray,
-        pos: signPos,
-        spriteSheet,
-    }
 
 update : Model, PlatformState -> Task Model _
 update = \model, state ->
@@ -180,7 +171,7 @@ readInput = \player, { keys } ->
 
 drawPlayer : Model -> Task {} _
 drawPlayer = \model ->
-    flipFacing = \rect ->
+    withFacing = \rect ->
         when playerFacing model.player is
             Right -> rect
             Left -> { rect & width: -rect.width }
@@ -189,7 +180,7 @@ drawPlayer = \model ->
     sprite =
         model.player.animation
         |> animationFrame
-        |> flipFacing
+        |> withFacing
 
     pos = { x: model.player.x, y: model.player.y }
 
@@ -270,7 +261,7 @@ loadLevel =
 
     text = RocRay.readFileToStr! "examples/assets/platformer/level.txt"
     lines = Str.split text "\n"
-    rows = List.map (lines text) \line ->
+    rows = List.map lines \line ->
         bytes = Str.toUtf8 line
         List.map bytes toTile
 
