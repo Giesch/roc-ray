@@ -42,30 +42,6 @@ init! = \{} ->
         maxScore: 0,
     }
 
-moveBall : Ball -> Ball
-moveBall = \ball -> { ball & pos: { x: ball.pos.x + ball.vel.x, y: ball.pos.y + ball.vel.y } }
-
-bounce : Ball, F32 -> Ball
-bounce = \ball, pos ->
-    { x, y } = ball.pos
-    { x: vx, y: vy } = ball.vel
-    (x2, vx2, vy2) =
-        if x > width - ballSize then
-            (width - ballSize, -vx * 1.1, vy)
-        else if x < pw && y + ballSize > pos && y < pos + paddle then
-            (pw, -vx * 1.1, vy * 1.1)
-        else
-            (x, vx, vy)
-    (y2, vy3) =
-        if y < 0 then
-            (0, -vy2 * 1.1)
-        else if y > height - ballSize then
-            (height - ballSize, -vy2 * 1.1)
-        else
-            (y, vy2)
-
-    { pos: { x: x2, y: y2 }, vel: { x: vx2, y: vy3 } }
-
 render! : Model, PlatformState => Result Model []
 render! = \model, state ->
 
@@ -140,3 +116,28 @@ drawCrossHair! = \mousePos ->
         end: { x: width, y: Num.toF32 mousePos.y },
         color: Yellow,
     }
+
+
+moveBall : Ball -> Ball
+moveBall = \ball -> { ball & pos: { x: ball.pos.x + ball.vel.x, y: ball.pos.y + ball.vel.y } }
+
+bounce : Ball, F32 -> Ball
+bounce = \ball, pos ->
+    { x, y } = ball.pos
+    { x: vx, y: vy } = ball.vel
+    (x2, vx2, vy2) =
+        if x > width - ballSize then
+            (width - ballSize, -vx * 1.1, vy)
+        else if x < pw && y + ballSize > pos && y < pos + paddle then
+            (pw, -vx * 1.1, vy * 1.1)
+        else
+            (x, vx, vy)
+    (y2, vy3) =
+        if y < 0 then
+            (0, -vy2 * 1.1)
+        else if y > height - ballSize then
+            (height - ballSize, -vy2 * 1.1)
+        else
+            (y, vy2)
+
+    { pos: { x: x2, y: y2 }, vel: { x: vx2, y: vy3 } }

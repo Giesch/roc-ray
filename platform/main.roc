@@ -21,18 +21,18 @@ PlatformStateFromHost : {
     mouseWheel : F32,
 }
 
-init! : {} => Result (Box Model) {}
-init! = \{} ->
+init! : I32 => Box Model
+init! = \_x ->
     main.init! {}
     |> \result ->
         when result is
-            Ok m -> Ok (Box.box m)
+            Ok m -> Box.box m
             Err err ->
                 Effect.log! (Inspect.toStr err) (Effect.toLogLevel LogError)
                 Effect.exit! {}
-                Err {}
+                crash "unreachable"
 
-render! : Box Model, PlatformStateFromHost => Result (Box Model) {}
+render! : Box Model, PlatformStateFromHost => Box Model
 render! = \boxedModel, platformState ->
     model = Box.unbox boxedModel
 
@@ -53,11 +53,11 @@ render! = \boxedModel, platformState ->
     main.render! model state
     |> \result ->
         when result is
-            Ok m -> Ok (Box.box m)
+            Ok m -> Box.box m
             Err err ->
                 Effect.log! (Inspect.toStr err) (Effect.toLogLevel LogError)
                 Effect.exit! {}
-                Err {}
+                crash "unreachable"
 
 mouseButtonsForApp : { mouseButtons : List U8 } -> Mouse.Buttons
 mouseButtonsForApp = \{ mouseButtons } ->

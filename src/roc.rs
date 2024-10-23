@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-use roc_std::{RocBox, RocResult, RocStr};
+use roc_std::{RocBox, RocStr};
 use roc_std_heap::ThreadSafeRefcountedResourceHeap;
 use std::mem::ManuallyDrop;
 use std::os::raw::c_void;
@@ -131,27 +131,6 @@ pub unsafe extern "C" fn roc_getppid() -> libc::pid_t {
     libc::getppid()
 }
 
-#[derive(Debug)]
-pub struct Model {
-    model: RocBox<()>,
-}
-impl Model {
-    unsafe fn init(model: RocBox<()>) -> Self {
-        // Set the refcount to constant to ensure this never gets freed.
-        // This also makes it thread-safe.
-        let data_ptr: *mut usize = std::mem::transmute(model);
-        let rc_ptr = data_ptr.offset(-1);
-        let max_refcount = 0;
-        *rc_ptr = max_refcount;
-        Self {
-            model: std::mem::transmute(data_ptr),
-        }
-    }
-}
-
-unsafe impl Send for Model {}
-unsafe impl Sync for Model {}
-
 #[derive(Clone, Default, Debug, PartialEq, PartialOrd)]
 #[repr(C)]
 pub struct PlatformState {
@@ -178,61 +157,42 @@ impl roc_std::RocRefcounted for PlatformState {
     }
 }
 
-pub fn call_roc_init() -> Model {
+pub fn call_roc_init() -> RocBox<()> {
     extern "C" {
         #[link_name = "roc__init_1_exposed_size"]
         fn init_size() -> usize;
 
-        #[allow(improper_ctypes)]
-        #[link_name = "roc__init_1_exposed_generic"]
-        fn init_caller(model: *mut RocResult<RocBox<()>, ()>, void_arg: ());
+        #[link_name = "roc__init_1_exposed"]
+        fn init_caller(arg_not_used: i32) -> RocBox<()>;
     }
 
     unsafe {
-        // save stack space for return value
-        let mut result: RocResult<RocBox<()>, ()> = RocResult::err(());
-        debug_assert_eq!(std::mem::size_of_val(&result), init_size());
+        let model: RocBox<()> = init_caller(0);
 
-        init_caller(&mut result, ());
+        debug_assert_eq!(std::mem::size_of_val(&model), init_size());
 
-        match result.into() {
-            Err(()) => {
-                panic!("roc returned an error from init");
-            }
-            Ok(model) => Model::init(model),
-        }
+        model
     }
 }
 
-pub fn call_roc_render(platform_state: PlatformState, model: &Model) -> Model {
+pub fn call_roc_render(platform_state: PlatformState, model: RocBox<()>) -> RocBox<()> {
     extern "C" {
         #[link_name = "roc__render_1_exposed_size"]
         fn render_size() -> usize;
 
-        #[link_name = "roc__render_1_exposed_generic"]
+        #[link_name = "roc__render_1_exposed"]
         fn render_caller(
-            model_out: *mut RocResult<RocBox<()>, ()>,
-            model_in: *const RocBox<()>,
+            model_in: RocBox<()>,
             platform_state: *const ManuallyDrop<PlatformState>,
-        );
+        ) -> RocBox<()>;
+
     }
 
     unsafe {
-        // save stack space for return value
-        let mut result: RocResult<RocBox<()>, ()> = RocResult::err(());
-        debug_assert_eq!(std::mem::size_of_val(&result), render_size());
+        let model = render_caller(model, &ManuallyDrop::new(platform_state));
 
-        render_caller(
-            &mut result,
-            &model.model,
-            &ManuallyDrop::new(platform_state),
-        );
+        debug_assert_eq!(std::mem::size_of_val(&model), render_size());
 
-        match result.into() {
-            Err(()) => {
-                panic!("roc returned an error from render");
-            }
-            Ok(model) => Model::init(model),
-        }
+        model
     }
 }
