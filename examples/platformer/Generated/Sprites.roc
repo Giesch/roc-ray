@@ -1,7 +1,7 @@
 module [
     Sprite,
     imagePath,
-    load,
+    load!,
     blockBrown,
     blockBrownBroken,
     blockGreen,
@@ -384,9 +384,9 @@ imagePath =
     "examples/assets/platformer/spritesheet_complete.png"
 
 ## load the sprite sheet as a raylib texture
-load : Task Texture _
-load =
-    RocRay.loadTexture imagePath
+load! : {} => Texture
+load! = \{} ->
+    RocRay.loadTexture! imagePath
 
 ## the offset and size of an image in the sprite sheet
 Sprite : Rectangle

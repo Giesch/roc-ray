@@ -18,7 +18,7 @@ import Generated.Sprites as Sprites exposing [Sprite]
 ### level editor (in pause screen?)
 
 main : RocRay.Program Model _
-main = { init, render }
+main = { init!, render! }
 
 Model : {
     screen : [Playing, Paused],
@@ -47,21 +47,23 @@ Animation : [
 
 tileSize = 64
 
-init : Task Model _
-init =
+init! : {} => Result Model _
+init! = \{} ->
     RocRay.setTargetFPS! 60
 
     RocRay.setDrawFPS! { fps: Visible }
 
-    spriteSheet = Sprites.load!
-    level = loadLevel!
+    spriteSheet = Sprites.load! {}
+    level = loadLevel! {}
     windowWidth = 12 * tileSize
     windowHeight = 10 * tileSize
 
     RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
     RocRay.setWindowTitle! "Platformer Example"
 
-    Task.ok (newGame { spriteSheet, level, windowWidth, windowHeight })
+    model = newGame { spriteSheet, level, windowWidth, windowHeight }
+
+    Ok model
 
 newGame : { spriteSheet : Texture, level : Level, windowWidth : F32, windowHeight : F32 } -> Model
 newGame = \{ spriteSheet, level, windowWidth, windowHeight } ->
@@ -86,21 +88,21 @@ newGame = \{ spriteSheet, level, windowWidth, windowHeight } ->
 
 blueGreenGray = RGBA 240 255 245 255
 
-render : Model, PlatformState -> Task Model _
-render = \model, state ->
+render! : Model, PlatformState => Result Model []
+render! = \model, state ->
     newModel = update! model state
     draw! newModel
-    Task.ok newModel
+    Ok newModel
 
-draw : Model -> Task {} _
-draw = \model ->
+draw! : Model => {}
+draw! = \model ->
     RocRay.beginDrawing! blueGreenGray
     drawLevel! model
     drawPlayer! model
-    RocRay.endDrawing!
+    RocRay.endDrawing! {}
 
-drawLevel : Model -> Task {} _
-drawLevel = \{ spriteSheet, level } ->
+drawLevel! : Model => {}
+drawLevel! = \{ spriteSheet, level } ->
     drawTileSpriteArgs : { sprite : Sprite, r : U64, c : U64 } -> _
     drawTileSpriteArgs = \{ sprite, r, c } ->
         x = Num.toF32 (tileSize * c)
@@ -119,10 +121,10 @@ drawLevel = \{ spriteSheet, level } ->
         |> List.join
         |> List.keepOks \id -> id
 
-    Task.forEach! gridSpritesToDraw drawSprite
+    forEach! gridSpritesToDraw drawSprite!
 
-update : Model, PlatformState -> Task Model _
-update = \model, state ->
+update! : Model, PlatformState => Model
+update! = \model, state ->
     timestampMillis = state.timestampMillis
     deltaMillis = timestampMillis - model.timestampMillis
     deltaTime = Num.toF32 deltaMillis
@@ -148,10 +150,10 @@ update = \model, state ->
         x = oldPlayer.x + xMove * runSpeed * deltaTime
         { oldPlayer & intent, animation, x }
 
-    Task.ok { model & player: newPlayer, timestampMillis }
+    { model & player: newPlayer, timestampMillis }
 
-readInput : Player, PlatformState -> Task Intent _
-readInput = \player, { keys } ->
+readInput! : Player, PlatformState => Intent
+readInput! = \player, { keys } ->
     left = if Keys.anyDown keys [KeyLeft, KeyA] then Down else Up
     right = if Keys.anyDown keys [KeyRight, KeyD] then Down else Up
 
@@ -161,10 +163,10 @@ readInput = \player, { keys } ->
             (Up, Down) -> Walk Right
             _same -> Idle (playerFacing player)
 
-    Task.ok intent
+    intent
 
-drawPlayer : Model -> Task {} _
-drawPlayer = \model ->
+drawPlayer! : Model => {}
+drawPlayer! = \model ->
     withFacing = \rect ->
         when playerFacing model.player is
             Right -> rect
@@ -178,11 +180,12 @@ drawPlayer = \model ->
 
     pos = { x: model.player.x, y: model.player.y }
 
-    drawSprite { sprite, pos, spriteSheet: model.spriteSheet, tint: White }
+    drawSprite! { sprite, pos, spriteSheet: model.spriteSheet, tint: White }
 
-drawSprite : { sprite : Sprite, spriteSheet : Texture, pos : Vector2, tint : Color } -> Task {} _
-drawSprite = \{ sprite, spriteSheet, pos, tint } ->
-    RocRay.drawTextureRec { source: sprite, texture: spriteSheet, pos, tint }
+# TODO remove this?
+drawSprite! : { sprite : Sprite, spriteSheet : Texture, pos : Vector2, tint : Color } => {}
+drawSprite! = \{ sprite, spriteSheet, pos, tint } ->
+    RocRay.drawTextureRec! { source: sprite, texture: spriteSheet, pos, tint }
 
 playerFacing : Player -> Facing
 playerFacing = \player ->
@@ -241,8 +244,8 @@ idlingLoop = [
 
 ### LEVEL
 
-loadLevel : Task Level _
-loadLevel =
+loadLevel! : {} => Level
+loadLevel! = \{} ->
     toTile : U8 -> Tile
     toTile = \ch ->
         when ch is
@@ -259,9 +262,10 @@ loadLevel =
         bytes = Str.toUtf8 line
         List.map bytes toTile
 
-    Task.ok rows
+    rows
 
 Level : List (List Tile)
+
 Tile : [
     PlayerStart,
     BlankSky,
@@ -278,3 +282,11 @@ spriteForTile = \tile ->
         Green4 -> Ok Sprites.tileGreen04
         Green5 -> Ok Sprites.tileGreen05
         Green3 -> Ok Sprites.tileGreen03
+
+forEach! : List a, (a => {}) => {}
+forEach! = \list, do! ->
+    when list is
+        [] -> {}
+        [x, .. as xs] ->
+            do! x
+            forEach! xs do!

@@ -574,16 +574,24 @@ unsafe extern "C" fn roc_fx_loadTexture(file_path: &RocStr) -> RocResult<RocBox<
         exit_with_msg(format!("Cannot load a texture while in {mode}"));
     }
 
+    println!("loading texture");
+
     // should have a valid utf8 string from roc, no need to check for null bytes
     let file_path = CString::new(file_path.as_str()).unwrap();
     let texture: bindings::Texture = bindings::LoadTexture(file_path.as_ptr());
+
+    println!("allocating heap space for texture");
 
     let heap = roc::texture_heap();
 
     let alloc_result = heap.alloc_for(texture);
     match alloc_result {
-        Ok(roc_box) => RocResult::ok(roc_box),
+        Ok(roc_box) => {
+            println!("exiting loadTexture success");
+            RocResult::ok(roc_box)
+        }
         Err(_) => {
+            println!("exiting loadTexture allocation failure");
             exit_with_msg("Unable to load texture, out of memory in the texture heap. Consider using ROC_RAY_MAX_TEXTURES_HEAP_SIZE env var to increase the heap size.".into());
             std::process::exit(1);
         }
@@ -616,7 +624,7 @@ unsafe extern "C" fn roc_fx_readFileToStr(path: &RocStr) -> RocResult<RocStr, ()
 
     let contents = match std::fs::read_to_string(path) {
         Ok(contents) => contents.replace("\r\n", "\n"),
-        Err(_err) => panic!("file not found: {path}")
+        Err(_err) => panic!("file not found: {path}"),
     };
 
     let contents = RocStr::from_slice_unchecked(contents.as_bytes());
