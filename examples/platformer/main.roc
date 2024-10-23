@@ -258,8 +258,6 @@ idlingLoop = [
 
 loadLevel : Task Level _
 loadLevel =
-    text = RocRay.readFileToStr! "examples/assets/platformer/level.txt"
-
     toTile : U8 -> Tile
     toTile = \ch ->
         when ch is
@@ -270,8 +268,9 @@ loadLevel =
             '3' -> Green3
             c -> crash "unrecognized character: $(Inspect.toStr c)"
 
+    text = RocRay.readFileToStr! "examples/assets/platformer/level.txt"
     lines = Str.split text "\n"
-    rows = List.map lines \line ->
+    rows = List.map (lines text) \line ->
         bytes = Str.toUtf8 line
         List.map bytes toTile
 
