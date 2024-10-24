@@ -94,6 +94,6 @@ Sound := Box {}
 loadSound : Str -> Task Sound {}
 playSound : Sound -> Task {} {}
 
-## normalizes carraige returns
+## normalizes carriage returns
 readFileToStr : Str -> Task Str {}
 readFileToBytes : Str -> Task (List U8) {}

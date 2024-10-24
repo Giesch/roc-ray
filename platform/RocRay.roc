@@ -424,7 +424,7 @@ playSound = \sound ->
     Effect.playSound sound
     |> Task.mapErr \{} -> crash "unreachable playSound"
 
-## normalizes carraige returns
+## normalizes carriage returns
 readFileToStr : Str -> Task Str *
 readFileToStr = \path ->
     Effect.readFileToStr path
