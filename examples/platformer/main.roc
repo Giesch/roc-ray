@@ -2,14 +2,14 @@ app [init, render, Model] { rr: platform "../../platform/main.roc" }
 
 import rr.RocRay exposing [PlatformState, Texture, Vector2, Color]
 import rr.Draw
-import rr.Keys
+import World exposing [World]
 
 import Generated.Sprites as Sprites exposing [Sprite]
 
 ### TODO
 ###
+### current walking with fixed timestep
 ### add a camera & background
-### make a level (code only)
 ### start porting physics
 ###
 ### audio (music?)
@@ -18,28 +18,14 @@ import Generated.Sprites as Sprites exposing [Sprite]
 
 Model : {
     screen : [Playing, Paused],
-    player : Player,
     spriteSheet : Texture,
     level : Level,
-    timestampMillis : U64,
+    world : World,
+    # TODO give init a timestamp from the platform
+    timestampMillis : [FirstFrame, Timestamp U64],
     windowWidth : F32,
     windowHeight : F32,
 }
-
-Player : {
-    x : F32,
-    y : F32,
-    intent : Intent,
-    animation : Animation,
-}
-
-Facing : [Right, Left]
-Intent : [Idle Facing, Walk Facing]
-
-Animation : [
-    Standing U64,
-    Walking U64,
-]
 
 tileSize = 64
 
@@ -57,25 +43,33 @@ init =
     RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
     RocRay.setWindowTitle! "Platformer Example"
 
-    Task.ok (newGame { spriteSheet, level, windowWidth, windowHeight })
+    model = newGame { spriteSheet, level, windowWidth, windowHeight }
 
-newGame : { spriteSheet : Texture, level : Level, windowWidth : F32, windowHeight : F32 } -> Model
+    Task.ok model
+
+newGame :
+    { spriteSheet : Texture, level : Level, windowWidth : F32, windowHeight : F32 }
+    -> Model
 newGame = \{ spriteSheet, level, windowWidth, windowHeight } ->
     # TODO get this out of the level
     playerX = Num.toF32 (3 * tileSize)
     playerY = Num.toF32 (5 * tileSize) - Sprites.playerGreenStand.height
 
+    player = {
+        x: playerX,
+        y: playerY,
+        intent: Idle Right,
+        animation: Standing 0,
+    }
+
+    world = World.new player
+
     {
         screen: Playing,
-        timestampMillis: 0,
+        timestampMillis: FirstFrame,
         spriteSheet,
         level,
-        player: {
-            x: playerX,
-            y: playerY,
-            intent: Idle Right,
-            animation: Standing 0,
-        },
+        world,
         windowWidth,
         windowHeight,
     }
@@ -119,59 +113,31 @@ drawLevel = \{ spriteSheet, level } ->
 update : Model, PlatformState -> Task Model _
 update = \model, state ->
     timestampMillis = state.timestampMillis
-    deltaMillis = timestampMillis - model.timestampMillis
-    deltaTime = Num.toF32 deltaMillis
+    deltaMillis =
+        when model.timestampMillis is
+            FirstFrame -> 0
+            Timestamp t -> timestampMillis - t
 
-    intent = readInput! model.player state
+    world = World.frameTick model.world state (Num.toF32 deltaMillis)
 
-    xMove =
-        when intent is
-            Walk Right -> 1.0
-            Walk Left -> -1.0
-            Idle _facing -> 0.0
-
-    animation =
-        when (intent, model.player.animation) is
-            (Idle _facing, Standing millis) -> Standing (millis + deltaMillis)
-            (Idle _facing, _other) -> Standing 0
-            (Walk _facing, Walking millis) -> Walking (millis + deltaMillis)
-            (Walk _facing, _other) -> Walking 0
-
-    newPlayer =
-        oldPlayer = model.player
-        runSpeed = 0.5
-        x = oldPlayer.x + xMove * runSpeed * deltaTime
-        { oldPlayer & intent, animation, x }
-
-    Task.ok { model & player: newPlayer, timestampMillis }
-
-readInput : Player, PlatformState -> Task Intent _
-readInput = \player, { keys } ->
-    left = if Keys.anyDown keys [KeyLeft, KeyA] then Down else Up
-    right = if Keys.anyDown keys [KeyRight, KeyD] then Down else Up
-
-    intent =
-        when (left, right) is
-            (Down, Up) -> Walk Left
-            (Up, Down) -> Walk Right
-            _same -> Idle (playerFacing player)
-
-    Task.ok intent
+    Task.ok { model & world, timestampMillis: Timestamp timestampMillis }
 
 drawPlayer : Model -> Task {} _
 drawPlayer = \model ->
     withFacing = \rect ->
-        when playerFacing model.player is
+        when World.playerFacing model.world.player is
             Right -> rect
             Left -> { rect & width: -rect.width }
 
+    player = model.world.player
+
     sprite : Sprite
     sprite =
-        model.player.animation
+        player.animation
         |> animationFrame
         |> withFacing
 
-    pos = { x: model.player.x, y: model.player.y }
+    pos = { x: player.x, y: player.y }
 
     drawSprite { sprite, pos, spriteSheet: model.spriteSheet, tint: White }
 
@@ -179,15 +145,9 @@ drawSprite : { sprite : Sprite, spriteSheet : Texture, pos : Vector2, tint : Col
 drawSprite = \{ sprite, spriteSheet, pos, tint } ->
     Draw.textureRec { source: sprite, texture: spriteSheet, pos, tint }
 
-playerFacing : Player -> Facing
-playerFacing = \player ->
-    when player.intent is
-        Idle facing -> facing
-        Walk facing -> facing
-
 ### ANIMATION
 
-animationFrame : Animation -> Sprite
+animationFrame : World.Animation -> Sprite
 animationFrame = \animation ->
     totalDuration : U64
     totalDuration =
@@ -200,7 +160,7 @@ animationFrame = \animation ->
             Standing elapsed -> (elapsed, idlingLoop)
             Walking elapsed -> (elapsed, walkingLoop)
 
-    offset = totalElapsed % totalDuration
+    offset = (Num.floor totalElapsed) % totalDuration
 
     (_elapsed, chosenSprite) =
         List.walkUntil steps (0, Err None) \(elapsed, _lastSprite), (nextSprite, duration) ->
