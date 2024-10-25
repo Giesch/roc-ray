@@ -143,7 +143,8 @@ generateRocModule = \{ atlas, imagePath, xmlPath } ->
 
     $(moduleDoc)
 
-    import ray.RocRay exposing [Texture, Rectangle]
+    import rr.RocRay exposing [Texture, Rectangle]
+    import rr.Texture
 
     ## the relative asset path to the sprite sheet image file
     imagePath : Str
@@ -153,9 +154,9 @@ generateRocModule = \{ atlas, imagePath, xmlPath } ->
     ## load the sprite sheet as a raylib texture
     load : Task Texture _
     load =
-        RocRay.loadTexture imagePath
+        Texture.load imagePath
 
-    ## the offset and size of an image in the sprite sheet
+    ## an individual image's offset and size in the sprite sheet
     Sprite : Rectangle
 
     $(spriteDefinitions)

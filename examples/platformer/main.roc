@@ -1,9 +1,8 @@
-app [main, Model] {
-    ray: platform "../../platform/main.roc",
-}
+app [init, render, Model] { rr: platform "../../platform/main.roc" }
 
-import ray.RocRay exposing [PlatformState, Texture, Vector2, Color]
-import ray.Keys
+import rr.RocRay exposing [PlatformState, Texture, Vector2, Color]
+import rr.Draw
+import rr.Keys
 
 import Generated.Sprites as Sprites exposing [Sprite]
 
@@ -16,9 +15,6 @@ import Generated.Sprites as Sprites exposing [Sprite]
 ### audio (music?)
 ### web build?
 ### level editor (in pause screen?)
-
-main : RocRay.Program Model _
-main = { init, render }
 
 Model : {
     screen : [Playing, Paused],
@@ -94,10 +90,9 @@ render = \model, state ->
 
 draw : Model -> Task {} _
 draw = \model ->
-    RocRay.beginDrawing! blueGreenGray
-    drawLevel! model
-    drawPlayer! model
-    RocRay.endDrawing!
+    Draw.draw! blueGreenGray \{} ->
+        drawLevel! model
+        drawPlayer! model
 
 drawLevel : Model -> Task {} _
 drawLevel = \{ spriteSheet, level } ->
@@ -182,7 +177,7 @@ drawPlayer = \model ->
 
 drawSprite : { sprite : Sprite, spriteSheet : Texture, pos : Vector2, tint : Color } -> Task {} _
 drawSprite = \{ sprite, spriteSheet, pos, tint } ->
-    RocRay.drawTextureRec { source: sprite, texture: spriteSheet, pos, tint }
+    Draw.textureRec { source: sprite, texture: spriteSheet, pos, tint }
 
 playerFacing : Player -> Facing
 playerFacing = \player ->
@@ -253,7 +248,7 @@ loadLevel =
             '3' -> Green3
             c -> crash "unrecognized character: $(Inspect.toStr c)"
 
-    text = RocRay.readFileToStr! "examples/assets/platformer/level.txt"
+    text = RocRay.loadFileToStr! "examples/assets/platformer/level.txt"
     lines = Str.split text "\n"
     rows = List.map lines \line ->
         bytes = Str.toUtf8 line
