@@ -1,6 +1,7 @@
 hosted Effect
     exposes [
         Texture,
+        RenderTexture,
         Sound,
         Camera,
         setWindowSize,
@@ -22,6 +23,8 @@ hosted Effect
         updateCamera,
         beginDrawing,
         endDrawing,
+        beginTexture,
+        endTexture,
         beginMode2D,
         endMode2D,
         log,
@@ -30,8 +33,9 @@ hosted Effect
         drawTextureRec,
         loadSound,
         playSound,
-        readFileToStr,
-        readFileToBytes,
+        createRenderTexture,
+        drawRenderTextureRec,
+        loadFileToStr,
     ]
     imports []
 
@@ -89,11 +93,15 @@ endMode2D : Camera -> Task {} {}
 Texture := Box {}
 loadTexture : Str -> Task Texture {}
 drawTextureRec : Texture, RocRectangle, RocVector2, RocColor -> Task {} {}
+drawRenderTextureRec : RenderTexture, RocRectangle, RocVector2, RocColor -> Task {} {}
 
 Sound := Box {}
 loadSound : Str -> Task Sound {}
 playSound : Sound -> Task {} {}
 
-## normalizes carriage returns
-readFileToStr : Str -> Task Str {}
-readFileToBytes : Str -> Task (List U8) {}
+RenderTexture := Box {}
+createRenderTexture : RocVector2 -> Task RenderTexture {}
+beginTexture : RenderTexture, RocColor -> Task {} {}
+endTexture : RenderTexture -> Task {} {}
+
+loadFileToStr : Str -> Task Str {}
