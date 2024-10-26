@@ -55,8 +55,11 @@ playerPositionRadius = 80.0
 
 init : Task Model []
 init =
-    RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
-    RocRay.setWindowTitle! "Super Pentagon"
+    RocRay.initWindow! {
+        title: "Super Pentagon",
+        width: windowWidth,
+        height: windowHeight,
+    }
     RocRay.setTargetFPS! fps
 
     Task.ok newGame
