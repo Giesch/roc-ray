@@ -6,27 +6,16 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 # to download an unofficial windows build of roc
 
 
-# list the available commands
-list:
-    just --list --unsorted
-
-
-# download roc.exe to ./windows/bin/
-[windows]
-setup:
-    ./windows/setup.ps1
-
-
 # build and run an executable
 [unix]
-dev app="examples/basic-shapes.roc" features="default":
+dev app="examples/platformer/main.roc" features="default":
     rm -f app.o
     roc build --no-link --emit-llvm-ir --output app.o {{app}} || true
     cargo run --features {{features}}
 
 # build and run an executable
 [windows]
-dev app="examples/basic-shapes.roc":
+dev app="examples/platformer/main.roc":
     rm -f app.obj
     .\windows\bin\roc.exe build --no-link --output app.obj {{app}} || $(exit 0)
     cargo run
@@ -85,3 +74,14 @@ format file:
 sprites:
     ./scripts/generate_sprite_atlas.roc
     roc format examples/platformer/Generated/Sprites.roc
+
+
+# download roc.exe to ./windows/bin/
+[windows]
+setup:
+    ./windows/setup.ps1
+
+
+# list the available commands
+list:
+    just --list --unsorted
