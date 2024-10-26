@@ -1,7 +1,8 @@
 module [World, Player, Animation, frameTick, new, playerFacing]
 
 import rr.RocRay exposing [PlatformState]
-import rr.Keys
+
+import Input
 
 ## the game's physics simulation
 World : {
@@ -52,7 +53,9 @@ useAllRemainingTime = \world, state ->
 ## a single physics tick
 tick : World, PlatformState -> World
 tick = \world, state ->
-    intent = readInput world.player state
+    intent =
+        facing = playerFacing world.player
+        Input.read state facing
 
     xMove =
         when intent is
@@ -73,21 +76,9 @@ tick = \world, state ->
         x = oldPlayer.x + xMove * runSpeed * millisPerTick
         { oldPlayer & intent, animation, x }
 
-    remainingMillis =
-        rem = world.remainingMillis - millisPerTick
-        if rem < 0 then 0 else rem
+    remainingMillis = world.remainingMillis - millisPerTick
 
     { world & remainingMillis, player }
-
-readInput : Player, PlatformState -> Intent
-readInput = \player, { keys } ->
-    left = if Keys.anyDown keys [KeyLeft, KeyA] then Down else Up
-    right = if Keys.anyDown keys [KeyRight, KeyD] then Down else Up
-
-    when (left, right) is
-        (Down, Up) -> Walk Left
-        (Up, Down) -> Walk Right
-        _same -> Idle (playerFacing player)
 
 playerFacing : Player -> Facing
 playerFacing = \player ->

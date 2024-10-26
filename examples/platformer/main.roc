@@ -8,7 +8,6 @@ import Generated.Sprites as Sprites exposing [Sprite]
 
 ### TODO
 ###
-### current walking with fixed timestep
 ### add a camera & background
 ### start porting physics
 ###
@@ -31,17 +30,21 @@ tileSize = 64
 
 init : Task Model _
 init =
+    windowWidth = 12 * tileSize
+    windowHeight = 10 * tileSize
+
+    RocRay.initWindow! {
+        title: "Platformer Example",
+        width: windowWidth,
+        height: windowHeight,
+    }
+
     RocRay.setTargetFPS! 60
 
     RocRay.setDrawFPS! { fps: Visible }
 
     spriteSheet = Sprites.load!
     level = loadLevel!
-    windowWidth = 12 * tileSize
-    windowHeight = 10 * tileSize
-
-    RocRay.setWindowSize! { width: windowWidth, height: windowHeight }
-    RocRay.setWindowTitle! "Platformer Example"
 
     model = newGame { spriteSheet, level, windowWidth, windowHeight }
 
