@@ -73,26 +73,20 @@ fn main() {
     // Search for static libraries in the cache directory
     println!("cargo:rustc-link-search=native={out_dir}");
 
-    // // Run the `ar rcs libapp.a app.o` command
-    // let lib_app_path = Path::new(&out_dir).join("libapp.a");
-    // let lib_app_path = lib_app_path.to_string_lossy();
-    // let output = std::process::Command::new("ar")
-    //     .args(&["rcs", &lib_app_path, "app.o"])
-    //     .output()
-    //     .expect("Failed to execute ar command");
-
-    // run ld to dynamically link the roc app
+    // run mold to dynamically link the roc app
+    println!("cargo:rustc-link-arg=-fuse-ld=mold");
     let lib_app_path = Path::new(&out_dir).join("libapp.so");
     let lib_app_path = lib_app_path.to_string_lossy();
-    let output = std::process::Command::new("ld")
+    let output = std::process::Command::new("mold")
         .args(&["-shared", "-o", &lib_app_path, "app.o"])
         .output()
-        .expect("Failed to execute ld command");
+        .expect("Failed to execute mold command");
 
     if !output.status.success() {
-        panic!("ld command failed with status: {}", output.status);
+        panic!("mold command failed with status: {}", output.status);
     }
 
+    // place raylib so files in out dir to be dynamically linked
     for so_file in ["libraylib.so", "libraylib.so.500", "libraylib.so.5.0.0"] {
         let vendored_path = manifest_dir()
             .join("vendor")
