@@ -73,36 +73,43 @@ fn main() {
     // Search for static libraries in the cache directory
     println!("cargo:rustc-link-search=native={out_dir}");
 
-    // Run the `ar rcs libapp.a app.o` command
-    let lib_app_path = Path::new(&out_dir).join("libapp.a");
-    let output = std::process::Command::new("ar")
-        .args(&[
-            "rcs",
-            format!("{}", lib_app_path.into_os_string().into_string().unwrap()).as_str(),
-            "app.o",
-        ])
+    // // Run the `ar rcs libapp.a app.o` command
+    // let lib_app_path = Path::new(&out_dir).join("libapp.a");
+    // let lib_app_path = lib_app_path.to_string_lossy();
+    // let output = std::process::Command::new("ar")
+    //     .args(&["rcs", &lib_app_path, "app.o"])
+    //     .output()
+    //     .expect("Failed to execute ar command");
+
+    // run ld to dynamically link the roc app
+    let lib_app_path = Path::new(&out_dir).join("libapp.so");
+    let lib_app_path = lib_app_path.to_string_lossy();
+    let output = std::process::Command::new("ld")
+        .args(&["-shared", "-o", &lib_app_path, "app.o"])
         .output()
-        .expect("Failed to execute ar command");
+        .expect("Failed to execute ld command");
 
     if !output.status.success() {
-        panic!("ar command failed with status: {}", output.status);
+        panic!("ld command failed with status: {}", output.status);
     }
 
-    let vendored_path = manifest_dir()
-        .join("vendor")
-        .join("raylib-5.0_linux_amd64")
-        .join("libraylib.a");
+    for so_file in ["libraylib.so", "libraylib.so.500", "libraylib.so.5.0.0"] {
+        let vendored_path = manifest_dir()
+            .join("vendor")
+            .join("raylib-5.0_linux_amd64")
+            .join(so_file);
 
-    if !vendored_path.exists() {
-        panic!("vendored static library not found");
+        if !vendored_path.exists() {
+            panic!("vendored dynamic library not found");
+        }
+
+        let out_path = Path::new(&out_dir).join(so_file);
+
+        std::fs::copy(vendored_path, out_path).unwrap();
     }
 
-    let out_path = Path::new(&out_dir).join("libraylib.a");
-
-    std::fs::copy(vendored_path, out_path).unwrap();
-
-    println!("cargo:rustc-link-lib=static=app");
-    println!("cargo:rustc-link-lib=static=raylib");
+    println!("cargo:rustc-link-lib=dylib=app");
+    println!("cargo:rustc-link-lib=dylib=raylib");
 }
 
 #[cfg(target_os = "windows")]
