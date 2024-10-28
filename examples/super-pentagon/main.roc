@@ -1,4 +1,4 @@
-app [Model, init, render] { rr: platform "../../platform/main.roc" }
+app [Model, init!, render!] { rr: platform "../../platform/main.roc" }
 
 import rr.RocRay exposing [Color, PlatformState, Vector2]
 import rr.Mouse
@@ -53,8 +53,8 @@ playerSize = 10.0
 # player's distance from the center of the screen
 playerPositionRadius = 80.0
 
-init : Task Model []
-init =
+init! : {} => Result Model []
+init! = \{} ->
     RocRay.initWindow! {
         title: "Super Pentagon",
         width: windowWidth,
@@ -62,7 +62,7 @@ init =
     }
     RocRay.setTargetFPS! fps
 
-    Task.ok newGame
+    Ok newGame
 
 newGame : Model
 newGame =
@@ -85,28 +85,23 @@ newGame =
 # spawn a new polygon every n millis
 spawnRate = 5000
 
-render : Model, PlatformState -> Task Model []
-render = \model, { frameCount, mouse, timestampMillis } ->
+render! : Model, PlatformState => Result Model []
+render! = \model, state ->
+    { mouse, timestampMillis } = state
+
     newModel =
         when model.screen is
-            Playing -> update { model, frameCount, mouse, timestampMillis }
+            Playing -> update! model state
             GameOver gameOver ->
                 leftMouse = mouse.buttons.left
                 gameOverUpdate model gameOver { leftMouse, timestampMillis }
 
     draw! (drawModel newModel)
 
-    Task.ok newModel
+    Ok newModel
 
-update :
-    {
-        model : Model,
-        frameCount : U64,
-        mouse : { position : Vector2 }m,
-        timestampMillis : U64,
-    }
-    -> Model
-update = \{ model, frameCount, mouse, timestampMillis } ->
+update! : Model, PlatformState => Model
+update! = \model, { frameCount, mouse, timestampMillis } ->
     deltaMillis = timestampMillis - model.timestampMillis
 
     # a tweaked sine wave added to objects' size & position
@@ -249,10 +244,10 @@ DrawModel : {
     beat : F32,
 }
 
-draw : DrawModel -> Task {} []
-draw = \model ->
+draw! : DrawModel => {}
+draw! = \model ->
     Draw.draw! Black \{} ->
-        Task.forEach! model.obstacleLines Draw.line
+        forEach! model.obstacleLines Draw.line!
 
         player = model.player
         playerColor =
@@ -263,8 +258,8 @@ draw = \model ->
 
         drawScore! model
 
-drawScore : DrawModel -> Task {} []
-drawScore = \model ->
+drawScore! : DrawModel => {}
+drawScore! = \model ->
     textSizeModifier = (model.score // 4) |> Num.toI32
     textSizeMultiplier = Num.toFrac (model.score // 16) * 0.2 + 1
 
@@ -279,7 +274,9 @@ drawScore = \model ->
         |> Num.floor
 
     text = Num.toStr (model.score + 1)
-    drawScoreNumber = \{ offset } ->
+
+    drawScoreNumber! : { offset : F32 } => {}
+    drawScoreNumber! = \{ offset } ->
         margin = 50
         pos = { x: margin + offset, y: margin }
         Draw.text! { text, size, pos, color: White }
@@ -379,3 +376,11 @@ gameOverUpdate = \model, gameOver, { timestampMillis, leftMouse } ->
         (OfferRestart, Pressed) -> newGame
         _ -> { model & timestampMillis, screen: GameOver { age, animation } }
 
+# TODO REPLACE WITH BUILTIN
+forEach! : List a, (a => {}) => {}
+forEach! = \l, f! ->
+    when l is
+        [] -> {}
+        [x, .. as xs] ->
+            f! x
+            forEach! xs f!

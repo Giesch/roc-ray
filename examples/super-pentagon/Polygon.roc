@@ -1,6 +1,6 @@
 module [
     Polygon,
-    draw,
+    draw!,
     edges,
     lines,
     verticies,
@@ -19,9 +19,9 @@ Polygon : {
     center : Vector2,
 }
 
-draw : Polygon -> Task {} []
-draw = \polygon ->
-    Task.forEach! (edges polygon) \(start, end) ->
+draw! : Polygon => {}
+draw! = \polygon ->
+    forEach! (edges polygon) \(start, end) ->
         Draw.line! { start, end, color: polygon.color }
 
 edges : Polygon -> List (Vector2, Vector2)
@@ -62,3 +62,11 @@ slidingPairs = \list ->
     offset = (list |> List.sublist { start: 1, len: (List.len list - 1) })
     List.map2 list offset \a, b -> (a, b)
 
+# TODO REPLACE WITH BUILTIN
+forEach! : List a, (a => {}) => {}
+forEach! = \l, f! ->
+    when l is
+        [] -> {}
+        [x, .. as xs] ->
+            f! x
+            forEach! xs f!
