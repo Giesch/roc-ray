@@ -1,7 +1,6 @@
 app [Model, init!, render!] { rr: platform "../../platform/main.roc" }
 
 import rr.RocRay exposing [Color, PlatformState, Vector2]
-import rr.Mouse
 import rr.Draw
 
 import Sides
@@ -87,16 +86,13 @@ spawnRate = 5000
 
 render! : Model, PlatformState => Result Model []
 render! = \model, state ->
-    { mouse, timestampMillis } = state
-
     newModel =
         when model.screen is
             Playing -> update! model state
             GameOver gameOver ->
-                leftMouse = mouse.buttons.left
-                gameOverUpdate model gameOver { leftMouse, timestampMillis }
+                gameOverUpdate model gameOver state
 
-    draw! (drawModel newModel)
+    newModel |> drawModel |> draw!
 
     Ok newModel
 
@@ -221,16 +217,7 @@ checkCollision = \{ playerLines, obstacleLines } ->
     List.any obstacleLines \obstacleLine ->
         List.any playerLines \playerLine -> intersect playerLine obstacleLine
 
-DrawSlice model : {
-    screen : [Playing, GameOver GameOverModel],
-    beat : F32,
-    center : Vector2,
-    playerRotation : F32,
-    obstacles : List Obstacle,
-    score : U64,
-}model
-
-drawModel : DrawSlice m -> DrawModel
+drawModel : Model -> DrawModel
 drawModel = \model ->
     player = playerPolygon model
     obstacleLines = List.joinMap model.obstacles Obstacle.lines
@@ -328,13 +315,7 @@ updateObstacle = \obstacle, { bpm, deltaMillis } ->
         |> Obstacle.setAge newAge
         |> Ok
 
-PlayerSlice model : {
-    beat : F32,
-    center : Vector2,
-    playerRotation : F32,
-}model
-
-playerPolygon : PlayerSlice m -> Polygon
+playerPolygon : Model -> Polygon
 playerPolygon = \model ->
     # reversed from polygons, normalized to between 0 and 1
     playerBeat = (-model.beat + 1.0) * 0.5
@@ -356,23 +337,18 @@ playerPolygon = \model ->
         radius: playerSize + sizeModifier,
     }
 
-GameOverModel : {
-    age : U64,
-    animation : [Drifting F32, OfferRestart],
-}
+GameOverModel : { age : U64, animation : GameOverAnimation }
 
-gameOverUpdate : Model, GameOverModel, { timestampMillis : U64, leftMouse : Mouse.ButtonState } -> Model
-gameOverUpdate = \model, gameOver, { timestampMillis, leftMouse } ->
+GameOverAnimation : [Drifting F32, OfferRestart]
+
+gameOverUpdate : Model, GameOverModel, PlatformState -> Model
+gameOverUpdate = \model, gameOver, { timestampMillis, mouse } ->
     deltaMillis = timestampMillis - model.timestampMillis
     age = gameOver.age + deltaMillis
     offset = (Num.toF32 age * 60 / 1000) * 2
-    animation =
-        if offset < windowWidth then
-            Drifting offset
-        else
-            OfferRestart
+    animation = if offset < windowWidth then Drifting offset else OfferRestart
 
-    when (animation, leftMouse) is
+    when (animation, mouse.buttons.left) is
         (OfferRestart, Pressed) -> newGame
         _ -> { model & timestampMillis, screen: GameOver { age, animation } }
 
