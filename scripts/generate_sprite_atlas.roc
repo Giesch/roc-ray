@@ -137,7 +137,7 @@ generateRocModule = \{ atlas, imagePath, xmlPath } ->
     module [
         Sprite,
         imagePath,
-        load,
+        load!,
         $(spriteExports)
     ]
 
@@ -152,9 +152,9 @@ generateRocModule = \{ atlas, imagePath, xmlPath } ->
         "$(imagePath)"
 
     ## load the sprite sheet as a raylib texture
-    load : Task Texture _
-    load =
-        Texture.load imagePath
+    load! : {} => Texture
+    load! = \\{} ->
+        Texture.load! imagePath
 
     ## an individual image's offset and size in the sprite sheet
     Sprite : Rectangle

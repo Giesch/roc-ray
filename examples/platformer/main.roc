@@ -1,4 +1,4 @@
-app [init, render, Model] { rr: platform "../../platform/main.roc" }
+app [init!, render!, Model] { rr: platform "../../platform/main.roc" }
 
 import rr.RocRay exposing [PlatformState, Texture, Vector2, Color]
 import rr.Draw
@@ -28,8 +28,8 @@ Model : {
 
 tileSize = 64
 
-init : Task Model _
-init =
+init! : {} => Result Model []
+init! = \{} ->
     windowWidth = 12 * tileSize
     windowHeight = 10 * tileSize
 
@@ -40,15 +40,14 @@ init =
     }
 
     RocRay.setTargetFPS! 60
+    RocRay.displayFPS! { fps: Visible, pos: { x: 100, y: 100 } }
 
-    RocRay.setDrawFPS! { fps: Visible }
-
-    spriteSheet = Sprites.load!
-    level = loadLevel!
+    spriteSheet = Sprites.load! {}
+    level = loadLevel! {}
 
     model = newGame { spriteSheet, level, windowWidth, windowHeight }
 
-    Task.ok model
+    Ok model
 
 newGame :
     { spriteSheet : Texture, level : Level, windowWidth : F32, windowHeight : F32 }
@@ -79,20 +78,20 @@ newGame = \{ spriteSheet, level, windowWidth, windowHeight } ->
 
 blueGreenGray = RGBA 240 255 245 255
 
-render : Model, PlatformState -> Task Model _
-render = \model, state ->
+render! : Model, PlatformState => Result Model []
+render! = \model, state ->
     newModel = update! model state
     draw! newModel
-    Task.ok newModel
+    Ok newModel
 
-draw : Model -> Task {} _
-draw = \model ->
+draw! : Model => {}
+draw! = \model ->
     Draw.draw! blueGreenGray \{} ->
         drawLevel! model
         drawPlayer! model
 
-drawLevel : Model -> Task {} _
-drawLevel = \{ spriteSheet, level } ->
+drawLevel! : Model => {}
+drawLevel! = \{ spriteSheet, level } ->
     drawTileSpriteArgs : { sprite : Sprite, r : U64, c : U64 } -> _
     drawTileSpriteArgs = \{ sprite, r, c } ->
         x = Num.toF32 (tileSize * c)
@@ -111,10 +110,10 @@ drawLevel = \{ spriteSheet, level } ->
         |> List.join
         |> List.keepOks \id -> id
 
-    Task.forEach! gridSpritesToDraw drawSprite
+    forEach! gridSpritesToDraw drawSprite!
 
-update : Model, PlatformState -> Task Model _
-update = \model, state ->
+update! : Model, PlatformState => Model
+update! = \model, state ->
     timestampMillis = state.timestampMillis
     deltaMillis =
         when model.timestampMillis is
@@ -123,10 +122,10 @@ update = \model, state ->
 
     world = World.frameTick model.world state (Num.toF32 deltaMillis)
 
-    Task.ok { model & world, timestampMillis: Timestamp timestampMillis }
+    { model & world, timestampMillis: Timestamp timestampMillis }
 
-drawPlayer : Model -> Task {} _
-drawPlayer = \model ->
+drawPlayer! : Model => {}
+drawPlayer! = \model ->
     withFacing = \rect ->
         when World.playerFacing model.world.player is
             Right -> rect
@@ -142,11 +141,11 @@ drawPlayer = \model ->
 
     pos = { x: player.x, y: player.y }
 
-    drawSprite { sprite, pos, spriteSheet: model.spriteSheet, tint: White }
+    drawSprite! { sprite, pos, spriteSheet: model.spriteSheet, tint: White }
 
-drawSprite : { sprite : Sprite, spriteSheet : Texture, pos : Vector2, tint : Color } -> Task {} _
-drawSprite = \{ sprite, spriteSheet, pos, tint } ->
-    Draw.textureRec { source: sprite, texture: spriteSheet, pos, tint }
+drawSprite! : { sprite : Sprite, spriteSheet : Texture, pos : Vector2, tint : Color } => {}
+drawSprite! = \{ sprite, spriteSheet, pos, tint } ->
+    Draw.textureRec! { source: sprite, texture: spriteSheet, pos, tint }
 
 ### ANIMATION
 
@@ -199,8 +198,8 @@ idlingLoop = [
 
 ### LEVEL
 
-loadLevel : Task Level _
-loadLevel =
+loadLevel! : {} => Level
+loadLevel! = \{} ->
     toTile : U8 -> Tile
     toTile = \ch ->
         when ch is
@@ -217,9 +216,10 @@ loadLevel =
         bytes = Str.toUtf8 line
         List.map bytes toTile
 
-    Task.ok rows
+    rows
 
 Level : List (List Tile)
+
 Tile : [
     PlayerStart,
     BlankSky,
@@ -236,3 +236,12 @@ spriteForTile = \tile ->
         Green4 -> Ok Sprites.tileGreen04
         Green5 -> Ok Sprites.tileGreen05
         Green3 -> Ok Sprites.tileGreen03
+
+# TODO REPLACE WITH BUILTIN
+forEach! : List a, (a => {}) => {}
+forEach! = \l, f! ->
+    when l is
+        [] -> {}
+        [x, .. as xs] ->
+            f! x
+            forEach! xs f!
