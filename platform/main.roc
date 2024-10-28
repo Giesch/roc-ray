@@ -1,12 +1,23 @@
 platform "roc-ray"
     requires { Model } {
-        init : Task state []err,
-        render : state, RocRay.PlatformState -> Task state []err,
+        init! : {} => Result Model [],
+        render! : Model, RocRay.PlatformState => Result Model [],
     }
-    exposes [RocRay, Keys, Mouse]
+    exposes [
+        RocRay,
+        Camera,
+        Draw,
+        Keys,
+        Mouse,
+        Music,
+        Network,
+        RenderTexture,
+        Sound,
+        Texture,
+    ]
     packages {}
     imports []
-    provides [forHost]
+    provides [initForHost!, renderForHost!]
 
 import RocRay
 import Mouse
@@ -32,26 +43,19 @@ PeerState : {
     disconnected : List Effect.RawUUID,
 }
 
-ProgramForHost model : {
-    initForHost : Task (Box model) {},
-    renderForHost : Box model, PlatformStateFromHost -> Task (Box model) {},
-}
-
-forHost : ProgramForHost _
-forHost = { initForHost, renderForHost }
-
-initForHost : Task (Box Model) {}
-initForHost =
-    Task.attempt init \result ->
+initForHost! : I32 => Box Model
+initForHost! = \_x ->
+    init! {}
+    |> \result ->
         when result is
-            Ok m -> Task.ok (Box.box m)
+            Ok m -> Box.box m
             Err err ->
                 Effect.log! (Inspect.toStr err) (Effect.toLogLevel LogError)
-                Effect.exit!
-                Task.err {}
+                Effect.exit! {}
+                crash "unreachable"
 
-renderForHost : Box Model, PlatformStateFromHost -> Task (Box Model) {}
-renderForHost = \boxedModel, platformState ->
+renderForHost! : Box Model, PlatformStateFromHost => Box Model
+renderForHost! = \boxedModel, platformState ->
     model = Box.unbox boxedModel
 
     { timestampMillis, messages, frameCount, keys, peers, mouseButtons, mousePosX, mousePosY, mouseWheel } = platformState
@@ -75,13 +79,14 @@ renderForHost = \boxedModel, platformState ->
         },
     }
 
-    Task.attempt (render model state) \result ->
+    render! model state
+    |> \result ->
         when result is
-            Ok m -> Task.ok (Box.box m)
+            Ok m -> Box.box m
             Err err ->
                 Effect.log! (Inspect.toStr err) (Effect.toLogLevel LogError)
-                Effect.exit!
-                Task.err {}
+                Effect.exit! {}
+                crash "unreachable"
 
 mouseButtonsForApp : { mouseButtons : List U8 } -> Mouse.Buttons
 mouseButtonsForApp = \{ mouseButtons } ->
