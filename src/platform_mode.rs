@@ -46,9 +46,12 @@ pub enum PlatformEffect {
     LogMsg,
     SetTargetFPS,
     GetScreenSize,
+    SendMsgToPeer,
     LoadSound,
+    LoadMusicStream,
     LoadFileToStr,
     PlaySound,
+    PlayMusicStream,
     DrawCircle,
     DrawCircleGradient,
     DrawRectangleGradientV,
@@ -86,7 +89,12 @@ impl PlatformMode {
         // we only need to track the "permitted" effects, everything else is "not permitted"
         match (self, e) {
             // PERMITTED IN ANY MODE
-            (_, SetDrawFPS) | (_, SetTargetFPS) | (_, MeasureText) | (_, LogMsg) => true,
+            (_, SetDrawFPS)
+            | (_, SetTargetFPS)
+            | (_, MeasureText)
+            | (_, LogMsg)
+            // TODO SendMsgToPeer should only be if we have initialized the "network"
+            | (_, SendMsgToPeer) => true,
 
             // PERMITTED ONLY AFTER INIT (NEEDS RAYLIB INIT)
             (mode, LoadFileToStr) if mode.after_init() => true,
@@ -95,6 +103,7 @@ impl PlatformMode {
             // PERMITTED DURING INIT BUT AFTER RAYLIB INIT
             (InitRaylib, CreateCamera)
             | (InitRaylib, LoadSound)
+            | (InitRaylib, LoadMusicStream)
             | (InitRaylib, LoadTexture)
             | (InitRaylib, CreateRenderTexture) => true,
 
@@ -115,6 +124,7 @@ impl PlatformMode {
 
             // PERMITTED ONLY IN RENDER
             (mode, PlaySound) if mode.not_init() => true,
+            (mode, PlayMusicStream) if mode.not_init() => true,
             (mode, TakeScreenshot) if mode.not_init() => true,
             (mode, GetScreenSize) if mode.not_init() => true,
 

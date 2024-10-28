@@ -3,7 +3,11 @@ hosted Effect
         Texture,
         RenderTexture,
         Sound,
+        Music,
+        LoadedMusic,
         Camera,
+        RawUUID,
+        PeerMessage,
         getScreenSize,
         exit,
         drawText,
@@ -35,6 +39,13 @@ hosted Effect
         createRenderTexture,
         drawRenderTextureRec,
         loadFileToStr,
+        sendToPeer,
+        loadMusicStream,
+        playMusicStream,
+        getMusicTimePlayed,
+        stopMusicStream,
+        pauseMusicStream,
+        resumeMusicStream,
     ]
     imports []
 
@@ -58,6 +69,19 @@ toLogLevel = \level ->
         LogFatal -> 6
         LogNone -> 7
 
+RawUUID : {
+    upper : U64,
+    lower : U64,
+    zzz1 : U64,
+    zzz2 : U64,
+    zzz3 : U64,
+}
+
+PeerMessage : {
+    id : Effect.RawUUID,
+    bytes : List U8,
+}
+
 log : Str, I32 -> Task {} {}
 
 initWindow : Str, F32, F32 -> Task {} {}
@@ -74,7 +98,7 @@ drawCircle : RocVector2, F32, RocColor -> Task {} {}
 drawCircleGradient : RocVector2, F32, RocColor, RocColor -> Task {} {}
 
 setTargetFPS : I32 -> Task {} {}
-setDrawFPS : Bool, I32, I32 -> Task {} {}
+setDrawFPS : Bool, RocVector2 -> Task {} {}
 
 takeScreenshot : Str -> Task {} {}
 
@@ -97,9 +121,21 @@ Sound := Box {}
 loadSound : Str -> Task Sound {}
 playSound : Sound -> Task {} {}
 
+Music := Box {}
+LoadedMusic : { music : Music, lenSeconds : F32 }
+loadMusicStream : Str -> Task LoadedMusic {}
+playMusicStream : Music -> Task {} {}
+stopMusicStream : Music -> Task {} {}
+pauseMusicStream : Music -> Task {} {}
+resumeMusicStream : Music -> Task {} {}
+# NOTE the Str (instead of {}) in this error type is to work around a compiler bug
+getMusicTimePlayed : Music -> Task F32 Str
+
 RenderTexture := Box {}
 createRenderTexture : RocVector2 -> Task RenderTexture {}
 beginTexture : RenderTexture, RocColor -> Task {} {}
 endTexture : RenderTexture -> Task {} {}
 
 loadFileToStr : Str -> Task Str {}
+
+sendToPeer : List U8, RawUUID -> Task {} {}
