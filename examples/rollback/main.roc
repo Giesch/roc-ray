@@ -82,8 +82,8 @@ drawConnected! = \{ world }, state ->
                 Draw.text! {
                     text,
                     pos: { x: 10, y: Num.toF32 height - 50 },
-                    size: 16,
-                    color: Red,
+                    size: 24,
+                    color: White,
                 }
 
         displayPeerConnections! state.network.peers
@@ -93,10 +93,14 @@ drawPlayerTriangle! = \player, color ->
 
     triangleRotationForFacing = \facing ->
         when facing is
-            Right -> 0
-            Down -> Num.tau * 1 / 4
-            Left -> Num.tau * 2 / 4
-            Up -> Num.tau * 3 / 4
+            (East, None) -> 0
+            (East, South) -> Num.tau * 1 / 8
+            (None, South) -> Num.tau * 2 / 8
+            (West, South) -> Num.tau * 3 / 8
+            (West, None) -> Num.tau * 4 / 8
+            (West, North) -> Num.tau * 5 / 8
+            (None, North) | (None, None) -> Num.tau * 6 / 8
+            (East, North) -> Num.tau * 7 / 8
 
     rotation =
         player

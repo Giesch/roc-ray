@@ -36,9 +36,12 @@ AnimatedSprite : {
     nextAnimationTick : F32, # milliseconds
 }
 
-Intent : [Walk Facing, Idle Facing]
+Intent : [
+    Thrust Facing,
+    Coast Facing,
+]
 
-Facing : [Up, Down, Left, Right]
+Facing : ([West, East, None], [North, South, None])
 
 TickContext : {
     tick : U64,
@@ -65,7 +68,7 @@ playerStart =
     {
         pos: { x, y },
         animation: initialAnimation,
-        intent: Idle Right,
+        intent: Coast (None, None),
     }
 
 initialAnimation : AnimatedSprite
@@ -113,11 +116,42 @@ movePlayer = \player, intent ->
 
     newPos =
         when intent is
-            Walk Up -> { pos & y: Pixel.sub pos.y moveSpeed }
-            Walk Down -> { pos & y: Pixel.add pos.y moveSpeed }
-            Walk Right -> { pos & x: Pixel.add pos.x moveSpeed }
-            Walk Left -> { pos & x: Pixel.sub pos.x moveSpeed }
-            Idle _ -> pos
+            Thrust (East, None) ->
+                x = Pixel.add pos.x moveSpeed
+                { pos & x }
+
+            Thrust (East, South) ->
+                x = Pixel.add pos.x moveSpeed
+                y = Pixel.add pos.y moveSpeed
+                { pos & x, y }
+
+            Thrust (None, South) ->
+                y = Pixel.add pos.y moveSpeed
+                { pos & y }
+
+            Thrust (West, South) ->
+                x = Pixel.sub pos.x moveSpeed
+                y = Pixel.add pos.y moveSpeed
+                { pos & x, y }
+
+            Thrust (West, None) ->
+                x = Pixel.sub pos.x moveSpeed
+                { pos & x }
+
+            Thrust (West, North) ->
+                x = Pixel.sub pos.x moveSpeed
+                y = Pixel.sub pos.y moveSpeed
+                { pos & x, y }
+
+            Thrust (None, North) | Thrust (None, None) ->
+                y = Pixel.sub pos.y moveSpeed
+                { pos & y }
+
+            Thrust (East, North) ->
+                x = Pixel.add pos.x moveSpeed
+                { pos & x }
+
+            Coast _facing -> pos
 
     { player & pos: newPos }
 
@@ -125,26 +159,25 @@ inputToIntent : Input, Facing -> Intent
 inputToIntent = \{ up, down, left, right }, facing ->
     horizontal =
         when (left, right) is
-            (Down, Up) -> Walk Left
-            (Up, Down) -> Walk Right
-            _same -> Idle facing
+            (Down, Up) -> West
+            (Up, Down) -> East
+            _same -> None
 
     vertical =
         when (up, down) is
-            (Down, Up) -> Walk Up
-            (Up, Down) -> Walk Down
-            _same -> Idle facing
+            (Down, Up) -> North
+            (Up, Down) -> South
+            _same -> None
 
     when (horizontal, vertical) is
-        (Walk horizontalFacing, _) -> Walk horizontalFacing
-        (Idle _, Walk verticalFacing) -> Walk verticalFacing
-        (Idle idleFacing, _) -> Idle idleFacing
+        (None, None) -> Coast facing
+        (h, v) -> Thrust (h, v)
 
 playerFacing : { intent : Intent }a -> Facing
 playerFacing = \{ intent } ->
     when intent is
-        Walk facing -> facing
-        Idle facing -> facing
+        Coast facing -> facing
+        Thrust facing -> facing
 
 updateAnimation : AnimatedSprite, U64 -> AnimatedSprite
 updateAnimation = \animation, timestampMillis ->
