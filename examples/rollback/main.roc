@@ -12,9 +12,8 @@ app [Model, init!, render!] {
 ### GGST's Rollback Pseudocode: https://gist.github.com/rcmagic/f8d76bca32b5609e85ab156db38387e9
 ### An explanation of fixed timestep: https://gafferongames.com/post/fix_your_timestep/
 
-import rr.RocRay exposing [Texture, Rectangle, PlatformState]
+import rr.RocRay exposing [PlatformState]
 import rr.Draw
-import rr.Texture
 import rr.Network
 
 import json.Json
@@ -25,15 +24,14 @@ import Pixel
 import Input
 import World
 import Config
+import Polygon exposing [Polygon]
+import Polygon.Sides
 
 Model : [Waiting WaitingModel, Connected ConnectedModel]
 
-WaitingModel : {
-    dude : Texture,
-}
+WaitingModel : {}
 
 ConnectedModel : {
-    dude : Texture,
     world : Rollback.Recording,
     timestampMillis : U64,
 }
@@ -51,10 +49,8 @@ init! = \{} ->
         height: Num.toF32 height,
     }
 
-    dude = Texture.load!? "examples/assets/sprite-dude/sheet.png"
-
     waiting : WaitingModel
-    waiting = { dude }
+    waiting = {}
 
     Ok (Waiting waiting)
 
@@ -65,42 +61,15 @@ render! = \model, state ->
         Connected connected -> renderConnected! connected state
 
 drawConnected! : ConnectedModel, PlatformState => {}
-drawConnected! = \{ dude, world }, state ->
-    Draw.draw! White \{} ->
-        Draw.text! { pos: { x: 10, y: 10 }, text: "Rocci the Cool Dude", size: 40, color: Navy }
-        Draw.text! { pos: { x: 10, y: 50 }, text: "Use arrow keys to walk around", size: 20, color: Green }
-
+drawConnected! = \{ world }, state ->
+    Draw.draw! Black \{} ->
         currentState = Rollback.currentState world
 
-        # draw local player
-        localPlayer = currentState.localPlayer
-        localPlayerFacing = World.playerFacing localPlayer
-        Draw.textureRec! {
-            texture: dude,
-            source: dudeSprite localPlayerFacing localPlayer.animation.frame,
-            pos: Pixel.toVector2 localPlayer.pos,
-            tint: White,
-        }
-
-        # draw remote player
-        remotePlayer = currentState.remotePlayer
-        remotePlayerIdPos = Pixel.toVector2 remotePlayer.pos
-        Draw.text! {
-            pos: remotePlayerIdPos,
-            text: "remote player",
-            size: 10,
-            color: Red,
-        }
-        remotePlayerFacing = World.playerFacing remotePlayer
-        Draw.textureRec! {
-            texture: dude,
-            source: dudeSprite remotePlayerFacing remotePlayer.animation.frame,
-            pos: Pixel.toVector2 remotePlayer.pos,
-            tint: Red,
-        }
+        # draw players
+        drawPlayerTriangle! currentState.localPlayer Green
+        drawPlayerTriangle! currentState.remotePlayer Blue
 
         # draw ui
-
         when Rollback.desyncStatus world is
             Synced -> {}
             Desynced report ->
@@ -118,6 +87,32 @@ drawConnected! = \{ dude, world }, state ->
                 }
 
         displayPeerConnections! state.network.peers
+
+drawPlayerTriangle! : World.Player, RocRay.Color => {}
+drawPlayerTriangle! = \player, color ->
+
+    triangleRotationForFacing = \facing ->
+        when facing is
+            Right -> 0
+            Down -> Num.tau * 1 / 4
+            Left -> Num.tau * 2 / 4
+            Up -> Num.tau * 3 / 4
+
+    rotation =
+        player
+        |> World.playerFacing
+        |> triangleRotationForFacing
+
+    triangle : Polygon
+    triangle = {
+        color,
+        rotation,
+        sides: Polygon.Sides.threePlus 0,
+        radius: 20,
+        center: Pixel.toVector2 player.pos,
+    }
+
+    Polygon.draw! triangle
 
 renderWaiting! : WaitingModel, PlatformState => Result Model []
 renderWaiting! = \waiting, state ->
@@ -142,7 +137,7 @@ renderWaiting! = \waiting, state ->
             Ok (Waiting waiting)
 
 waitingToConnected! : WaitingModel, PlatformState => Result Model []
-waitingToConnected! = \waiting, state ->
+waitingToConnected! = \_waiting, state ->
     world : Rollback.Recording
     world = Rollback.start {
         config: Config.rollback,
@@ -152,7 +147,6 @@ waitingToConnected! = \waiting, state ->
     connected : ConnectedModel
     connected = {
         world,
-        dude: waiting.dude,
         timestampMillis: state.timestamp.renderStart,
     }
 
@@ -161,19 +155,10 @@ waitingToConnected! = \waiting, state ->
     Ok (Connected connected)
 
 drawWaiting! : WaitingModel => {}
-drawWaiting! = \waiting ->
+drawWaiting! = \_waiting ->
     Draw.draw! Silver \{} ->
-        Draw.text! { pos: { x: 10, y: 10 }, text: "Rocci the Cool Dude", size: 40, color: Navy }
-        Draw.text! { pos: { x: 10, y: 50 }, text: "Use arrow keys to walk around", size: 20, color: Green }
-
         localPlayer = World.playerStart
-        playerFacing = World.playerFacing localPlayer
-        Draw.textureRec! {
-            texture: waiting.dude,
-            source: dudeSprite playerFacing localPlayer.animation.frame,
-            pos: Pixel.toVector2 localPlayer.pos,
-            tint: Silver,
-        }
+        drawPlayerTriangle! localPlayer Green
 
 renderConnected! : ConnectedModel, PlatformState => Result Model []
 renderConnected! = \oldModel, state ->
@@ -211,23 +196,6 @@ renderConnected! = \oldModel, state ->
             crash "blocked world:\n$(crashInfo)\n$(history)"
 
     Ok (Connected model)
-
-dudeSprite : World.Facing, U8 -> Rectangle
-dudeSprite = \sequence, frame ->
-    when sequence is
-        Up -> sprite64x64source { row: 8, col: frame % 9 }
-        Down -> sprite64x64source { row: 10, col: frame % 9 }
-        Left -> sprite64x64source { row: 9, col: frame % 9 }
-        Right -> sprite64x64source { row: 11, col: frame % 9 }
-
-# get the pixel coordinates of a 64x64 sprite in the spritesheet
-sprite64x64source : { row : U8, col : U8 } -> Rectangle
-sprite64x64source = \{ row, col } -> {
-    x: 64 * (Num.toF32 col),
-    y: 64 * (Num.toF32 row),
-    width: 64,
-    height: 64,
-}
 
 displayPeerConnections! : RocRay.NetworkPeers => {}
 displayPeerConnections! = \{ connected, disconnected } ->
