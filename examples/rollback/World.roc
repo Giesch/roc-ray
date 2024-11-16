@@ -33,6 +33,8 @@ Intent : [
     Coast Facing,
 ]
 
+# (None, None) represents the state before any input,
+# and is treated as (None, North)
 Facing : ([West, East, None], [North, South, None])
 
 TickContext : {

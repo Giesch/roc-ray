@@ -90,21 +90,22 @@ drawConnected! = \{ world }, state ->
 
 drawPlayerTriangle! : World.Player, RocRay.Color => {}
 drawPlayerTriangle! = \player, color ->
-    triangleRotationForFacing = \facing ->
+    turnForFacing = \facing ->
         when facing is
             (East, None) -> 0
-            (East, South) -> Num.tau * 1 / 8
-            (None, South) -> Num.tau * 2 / 8
-            (West, South) -> Num.tau * 3 / 8
-            (West, None) -> Num.tau * 4 / 8
-            (West, North) -> Num.tau * 5 / 8
-            (None, North) | (None, None) -> Num.tau * 6 / 8
-            (East, North) -> Num.tau * 7 / 8
+            (East, South) -> 1 / 8
+            (None, South) -> 2 / 8
+            (West, South) -> 3 / 8
+            (West, None) -> 4 / 8
+            (West, North) -> 5 / 8
+            (None, North) | (None, None) -> 6 / 8
+            (East, North) -> 7 / 8
 
     rotation =
         player
         |> World.playerFacing
-        |> triangleRotationForFacing
+        |> turnForFacing
+        |> \turn -> turn * Num.tau
 
     triangle : Polygon
     triangle = {
