@@ -90,7 +90,6 @@ drawConnected! = \{ world }, state ->
 
 drawPlayerTriangle! : World.Player, RocRay.Color => {}
 drawPlayerTriangle! = \player, color ->
-
     triangleRotationForFacing = \facing ->
         when facing is
             (East, None) -> 0

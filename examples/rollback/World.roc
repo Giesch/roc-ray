@@ -1,7 +1,6 @@
 module [
     World,
     Player,
-    AnimatedSprite,
     Facing,
     Intent,
     tick,
@@ -26,14 +25,7 @@ World : {
 
 Player : {
     pos : PixelVec,
-    animation : AnimatedSprite,
     intent : Intent,
-}
-
-AnimatedSprite : {
-    frame : U8, # frame index, increments each tick
-    frameRate : U8, # frames per second
-    nextAnimationTick : F32, # milliseconds
 }
 
 Intent : [
@@ -55,7 +47,6 @@ initial = {
     localPlayer: playerStart,
     remotePlayer: {
         pos: playerStart.pos,
-        animation: playerStart.animation,
         intent: playerStart.intent,
     },
 }
@@ -67,12 +58,8 @@ playerStart =
 
     {
         pos: { x, y },
-        animation: initialAnimation,
         intent: Coast (None, None),
     }
-
-initialAnimation : AnimatedSprite
-initialAnimation = { frame: 0, frameRate: 10, nextAnimationTick: 0 }
 
 ## used by Rollback for checking desyncs
 checksum : World -> I64
@@ -93,18 +80,16 @@ positionsChecksum = \{ localPlayerPos, remotePlayerPos } ->
 
 ## advance the game state one discrete step
 tick : World, TickContext -> World
-tick = \state, { timestampMillis, localInput, remoteInput } ->
+tick = \state, { localInput, remoteInput } ->
     localPlayer =
         oldPlayer = state.localPlayer
-        animation = updateAnimation oldPlayer.animation timestampMillis
         intent = inputToIntent localInput (playerFacing oldPlayer)
-        movePlayer { oldPlayer & animation, intent } intent
+        movePlayer { oldPlayer & intent } intent
 
     remotePlayer =
         oldRemotePlayer = state.remotePlayer
-        animation = updateAnimation oldRemotePlayer.animation timestampMillis
         intent = inputToIntent remoteInput (playerFacing oldRemotePlayer)
-        movePlayer { oldRemotePlayer & animation, intent } intent
+        movePlayer { oldRemotePlayer & intent } intent
 
     { localPlayer, remotePlayer }
 
@@ -178,14 +163,3 @@ playerFacing = \{ intent } ->
     when intent is
         Coast facing -> facing
         Thrust facing -> facing
-
-updateAnimation : AnimatedSprite, U64 -> AnimatedSprite
-updateAnimation = \animation, timestampMillis ->
-    t = Num.toF32 timestampMillis
-    if t > animation.nextAnimationTick then
-        frame = Num.addWrap animation.frame 1
-        millisToGo = 1000 / (Num.toF32 animation.frameRate)
-        nextAnimationTick = t + millisToGo
-        { animation & frame, nextAnimationTick }
-    else
-        animation
