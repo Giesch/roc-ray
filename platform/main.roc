@@ -1,12 +1,13 @@
 platform "roc-ray"
     requires { Model } {
-        init! : {} => Result Model [],
-        render! : Model, RocRay.PlatformState => Result Model [],
+        init! : {} => Result Model []_,
+        render! : Model, RocRay.PlatformState => Result Model []_,
     }
     exposes [
         RocRay,
         Camera,
         Draw,
+        Font,
         Keys,
         Mouse,
         Music,
@@ -14,6 +15,7 @@ platform "roc-ray"
         RenderTexture,
         Sound,
         Texture,
+        Time,
     ]
     packages {}
     imports []
@@ -26,45 +28,21 @@ import InternalMouse
 import Effect
 import Network
 
-PlatformStateFromHost : {
-    frameCount : U64,
-    keys : List U8,
-    mouseButtons : List U8,
-    timestampMillis : U64,
-    mousePosX : F32,
-    mousePosY : F32,
-    mouseWheel : F32,
-    peers : PeerState,
-    messages : List Effect.PeerMessage,
-}
-
-PeerState : {
-    connected : List Effect.RawUUID,
-    disconnected : List Effect.RawUUID,
-}
-
-initForHost! : I32 => Box Model
+initForHost! : I32 => Result (Box Model) Str
 initForHost! = \_x ->
     init! {}
-    |> \result ->
-        when result is
-            Ok m -> Box.box m
-            Err err ->
-                Effect.log! (Inspect.toStr err) (Effect.toLogLevel LogError)
-                Effect.exit! {}
-                crash "unreachable"
+    |> Result.map Box.box
+    |> Result.mapErr Inspect.toStr
 
-renderForHost! : Box Model, PlatformStateFromHost => Box Model
-renderForHost! = \boxedModel, platformState ->
+renderForHost! : Box Model, Effect.PlatformStateFromHost => Result (Box Model) Str
+renderForHost! = \boxedModel, { frameCount, keys, mouseButtons, timestamp, mousePosX, mousePosY, mouseWheel, peers, messages } ->
     model = Box.unbox boxedModel
-
-    { timestampMillis, messages, frameCount, keys, peers, mouseButtons, mousePosX, mousePosY, mouseWheel } = platformState
 
     state : RocRay.PlatformState
     state = {
-        timestampMillis,
         frameCount,
         keys: InternalKeyboard.pack keys,
+        timestamp,
         mouse: {
             position: { x: mousePosX, y: mousePosY },
             buttons: mouseButtonsForApp { mouseButtons },
@@ -80,13 +58,8 @@ renderForHost! = \boxedModel, platformState ->
     }
 
     render! model state
-    |> \result ->
-        when result is
-            Ok m -> Box.box m
-            Err err ->
-                Effect.log! (Inspect.toStr err) (Effect.toLogLevel LogError)
-                Effect.exit! {}
-                crash "unreachable"
+    |> Result.map Box.box
+    |> Result.mapErr Inspect.toStr
 
 mouseButtonsForApp : { mouseButtons : List U8 } -> Mouse.Buttons
 mouseButtonsForApp = \{ mouseButtons } ->

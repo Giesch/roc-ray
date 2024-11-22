@@ -1,19 +1,21 @@
 #![allow(non_snake_case)]
-use crate::glue::PlatformState;
-use roc_std::{RocBox, RocStr};
+use crate::config::ExitErrCode;
+use crate::glue::{self, PeerMessage};
+use crate::logger;
+use matchbox_socket::{PeerId, PeerState};
+use roc_std::{RocList, RocRefcounted, RocResult, RocStr};
 use roc_std_heap::ThreadSafeRefcountedResourceHeap;
-use std::mem::ManuallyDrop;
+use std::collections::HashMap;
+use std::ffi::c_int;
 use std::os::raw::c_void;
 use std::sync::OnceLock;
-
-use crate::bindings;
 
 mod music_heap;
 pub use music_heap::*;
 
 // note this is checked and deallocated in the roc_dealloc function
-pub fn camera_heap() -> &'static ThreadSafeRefcountedResourceHeap<bindings::Camera2D> {
-    static CAMERA_HEAP: OnceLock<ThreadSafeRefcountedResourceHeap<bindings::Camera2D>> =
+pub fn camera_heap() -> &'static ThreadSafeRefcountedResourceHeap<raylib::Camera2D> {
+    static CAMERA_HEAP: OnceLock<ThreadSafeRefcountedResourceHeap<raylib::Camera2D>> =
         OnceLock::new();
     const DEFAULT_ROC_RAY_MAX_CAMERAS_HEAP_SIZE: usize = 100;
     let max_heap_size = std::env::var("ROC_RAY_MAX_CAMERAS_HEAP_SIZE")
@@ -26,8 +28,8 @@ pub fn camera_heap() -> &'static ThreadSafeRefcountedResourceHeap<bindings::Came
 }
 
 // note this is checked and deallocated in the roc_dealloc function
-pub fn texture_heap() -> &'static ThreadSafeRefcountedResourceHeap<bindings::Texture> {
-    static TEXTURE_HEAP: OnceLock<ThreadSafeRefcountedResourceHeap<bindings::Texture>> =
+pub fn texture_heap() -> &'static ThreadSafeRefcountedResourceHeap<raylib::Texture> {
+    static TEXTURE_HEAP: OnceLock<ThreadSafeRefcountedResourceHeap<raylib::Texture>> =
         OnceLock::new();
     const DEFAULT_ROC_RAY_MAX_TEXTURES_HEAP_SIZE: usize = 1000;
     let max_heap_size = std::env::var("ROC_RAY_MAX_TEXTURES_HEAP_SIZE")
@@ -40,9 +42,8 @@ pub fn texture_heap() -> &'static ThreadSafeRefcountedResourceHeap<bindings::Tex
 }
 
 // note this is checked and deallocated in the roc_dealloc function
-pub fn sound_heap() -> &'static ThreadSafeRefcountedResourceHeap<bindings::Sound> {
-    static SOUND_HEAP: OnceLock<ThreadSafeRefcountedResourceHeap<bindings::Sound>> =
-        OnceLock::new();
+pub fn sound_heap() -> &'static ThreadSafeRefcountedResourceHeap<raylib::Sound> {
+    static SOUND_HEAP: OnceLock<ThreadSafeRefcountedResourceHeap<raylib::Sound>> = OnceLock::new();
     const DEFAULT_ROC_RAY_MAX_SOUNDS_HEAP_SIZE: usize = 1000;
     let max_heap_size = std::env::var("ROC_RAY_MAX_SOUNDS_HEAP_SIZE")
         .map(|v| v.parse().unwrap_or(DEFAULT_ROC_RAY_MAX_SOUNDS_HEAP_SIZE))
@@ -54,10 +55,9 @@ pub fn sound_heap() -> &'static ThreadSafeRefcountedResourceHeap<bindings::Sound
 }
 
 // note this is checked and deallocated in the roc_dealloc function
-pub fn render_texture_heap() -> &'static ThreadSafeRefcountedResourceHeap<bindings::RenderTexture> {
-    static RENDER_TEXTURE_HEAP: OnceLock<
-        ThreadSafeRefcountedResourceHeap<bindings::RenderTexture>,
-    > = OnceLock::new();
+pub fn render_texture_heap() -> &'static ThreadSafeRefcountedResourceHeap<raylib::RenderTexture> {
+    static RENDER_TEXTURE_HEAP: OnceLock<ThreadSafeRefcountedResourceHeap<raylib::RenderTexture>> =
+        OnceLock::new();
     const DEFAULT_ROC_RAY_MAX_RENDER_TEXTURE_HEAP_SIZE: usize = 1000;
     let max_heap_size = std::env::var("ROC_RAY_MAX_RENDER_TEXTURE_HEAP_SIZE")
         .map(|v| {
@@ -66,6 +66,19 @@ pub fn render_texture_heap() -> &'static ThreadSafeRefcountedResourceHeap<bindin
         })
         .unwrap_or(DEFAULT_ROC_RAY_MAX_RENDER_TEXTURE_HEAP_SIZE);
     RENDER_TEXTURE_HEAP.get_or_init(|| {
+        ThreadSafeRefcountedResourceHeap::new(max_heap_size)
+            .expect("Failed to allocate mmap for heap references.")
+    })
+}
+
+// note this is checked and deallocated in the roc_dealloc function
+pub fn font_heap() -> &'static ThreadSafeRefcountedResourceHeap<raylib::Font> {
+    static FONT_HEAP: OnceLock<ThreadSafeRefcountedResourceHeap<raylib::Font>> = OnceLock::new();
+    const DEFAULT_ROC_RAY_MAX_FONT_HEAP_SIZE: usize = 10;
+    let max_heap_size = std::env::var("ROC_RAY_MAX_FONT_HEAP_SIZE")
+        .map(|v| v.parse().unwrap_or(DEFAULT_ROC_RAY_MAX_FONT_HEAP_SIZE))
+        .unwrap_or(DEFAULT_ROC_RAY_MAX_FONT_HEAP_SIZE);
+    FONT_HEAP.get_or_init(|| {
         ThreadSafeRefcountedResourceHeap::new(max_heap_size)
             .expect("Failed to allocate mmap for heap references.")
     })
@@ -108,6 +121,12 @@ pub unsafe extern "C" fn roc_dealloc(c_ptr: *mut c_void, _alignment: u32) {
         return;
     }
 
+    let font_heap = font_heap();
+    if font_heap.in_range(c_ptr) {
+        font_heap.dealloc(c_ptr);
+        return;
+    }
+
     libc::free(c_ptr);
 }
 
@@ -123,7 +142,7 @@ pub unsafe extern "C" fn roc_realloc(
 
 #[no_mangle]
 pub unsafe extern "C" fn roc_panic(msg: &RocStr, _tag_id: u32) {
-    panic!("Roc crashed with: {}", msg.as_str());
+    logger::log(format!("Roc crashed with: {}", msg.as_str()).as_str());
 }
 
 #[no_mangle]
@@ -165,42 +184,221 @@ pub unsafe extern "C" fn roc_getppid() -> libc::pid_t {
     libc::getppid()
 }
 
-pub fn call_roc_init() -> RocBox<()> {
-    extern "C" {
-        #[link_name = "roc__initForHost_1_exposed_size"]
-        fn init_size() -> usize;
+pub struct App {
+    model: *const (),
+    state: glue::PlatformState,
+    peers: HashMap<PeerId, PeerState>,
+}
 
-        #[link_name = "roc__initForHost_1_exposed"]
-        fn init_caller(arg_not_used: i32) -> RocBox<()>;
+impl App {
+    pub fn init() -> App {
+        #[link(name = "app")]
+        extern "C" {
+            #[link_name = "roc__initForHost_1_exposed"]
+            fn init_caller(arg_not_used: i32) -> RocResult<*const (), RocStr>;
+        }
+
+        unsafe {
+            let mut state = glue::PlatformState::default();
+
+            state.timestamps.init_start = now();
+
+            let result = init_caller(0);
+
+            let model = match result.into() {
+                Ok(model) => model,
+                Err(msg) => {
+                    let msg = msg.to_string();
+                    logger::log(msg.as_str());
+                    crate::config::update(|c| {
+                        c.should_exit_msg_code = Some((msg, ExitErrCode::ErrFromRocInit))
+                    });
+
+                    // we return a null pointer to signal to the caller that the model is invalid
+                    // this is ok, the loop will display the error message instead of using this model
+                    &() as *const ()
+                }
+            };
+
+            state.timestamps.init_end = now();
+
+            App {
+                model,
+                state,
+                peers: HashMap::default(),
+            }
+        }
     }
 
-    unsafe {
-        let model: RocBox<()> = init_caller(0);
+    pub fn render(&mut self) {
+        extern "C" {
+            #[link_name = "roc__renderForHost_1_exposed"]
+            fn render_caller(
+                model_in: *const (),
+                state: *mut glue::PlatformState,
+            ) -> RocResult<*const (), RocStr>;
+        }
 
-        debug_assert_eq!(std::mem::size_of_val(&model), init_size());
+        unsafe {
+            self.state.frame_count += 1;
 
-        model
+            self.state.timestamps.last_render_start = self.state.timestamps.render_start;
+            self.state.timestamps.render_start = now();
+
+            self.state.mouse_buttons = get_mouse_button_states();
+            self.state.keys = get_keys_states();
+
+            let mut messages: RocList<PeerMessage> = RocList::with_capacity(100);
+
+            // Try to receive any pending (non-blocking)
+            let queued_network_messages = crate::worker::get_messages();
+
+            for msg in queued_network_messages {
+                use crate::worker::WorkerToMainMsg::*;
+                match msg {
+                    PeerConnected(peer) => {
+                        self.peers.insert(peer, PeerState::Connected);
+                    }
+                    PeerDisconnected(peer) => {
+                        self.peers.insert(peer, PeerState::Disconnected);
+                    }
+                    MessageReceived(id, bytes) => {
+                        messages.append(glue::PeerMessage {
+                            id: id.into(),
+                            bytes: RocList::from_slice(bytes.as_slice()),
+                        });
+                    }
+                    ConnectionFailed => {
+                        crate::config::update(|c| {
+                            c.should_exit_msg_code = Some((
+                                format!(
+                                    "Unable to connect to signaling server at {:?}. Exiting...",
+                                    c.network_web_rtc_url
+                                ),
+                                ExitErrCode::WebRTCConnectionError,
+                            ));
+                            c.should_exit = true;
+                        });
+                    }
+                    Disconnected => {
+                        // TODO give roc an error somehow, allow for reconnecting to a different server??
+                        crate::config::update(|c| {
+                            c.should_exit_msg_code = Some((
+                                format!(
+                                    "Disconnected from signaling server at {:?}. Exiting...",
+                                    c.network_web_rtc_url
+                                ),
+                                ExitErrCode::WebRTCConnectionDisconnected,
+                            ));
+                            c.should_exit = true;
+                        });
+                    }
+                }
+            }
+
+            // Update the target FPS if it has changed
+            if crate::config::with(|c| c.fps_target_dirty) {
+                raylib::SetTargetFPS(crate::config::with(|c| c.fps_target));
+
+                crate::config::update(|c| c.fps_target_dirty = false);
+            }
+
+            self.state.peers = (&self.peers).into();
+            self.state.messages = messages;
+            self.state.mouse_pos_x = raylib::GetMouseX() as f32;
+            self.state.mouse_pos_y = raylib::GetMouseY() as f32;
+            self.state.mouse_wheel = raylib::GetMouseWheelMove() as f32;
+
+            // Refcount so we Roc doesn't deallocate our state (so we can re-use it next frame)
+            self.state.inc();
+
+            let result = render_caller(self.model, &mut self.state);
+
+            let new_model = match result.into() {
+                Ok(model) => model,
+                Err(msg) => {
+                    let msg = msg.to_string();
+                    logger::log(msg.as_str());
+                    crate::config::update(|c| {
+                        c.should_exit_msg_code = Some((msg, ExitErrCode::ErrFromRocRender))
+                    });
+
+                    // we return a null pointer to signal to the caller that the model is invalid
+                    // this is ok, the immediate next loop will display the error message and not use this model
+                    &() as *const ()
+                }
+            };
+
+            self.model = new_model;
+
+            if crate::config::with(|c| c.fps_show) {
+                crate::config::with(|c| raylib::DrawFPS(c.fps_position.0, c.fps_position.1));
+            }
+
+            update_music_streams();
+
+            self.state.timestamps.last_render_end = now();
+        }
     }
 }
 
-pub fn call_roc_render(platform_state: PlatformState, model: RocBox<()>) -> RocBox<()> {
-    extern "C" {
-        #[link_name = "roc__renderForHost_1_exposed_size"]
-        fn render_size() -> usize;
+fn now() -> u64 {
+    #[cfg(not(target_family = "wasm"))]
+    {
+        use std::time::SystemTime;
 
-        #[link_name = "roc__renderForHost_1_exposed"]
-        fn render_caller(
-            model_in: RocBox<()>,
-            platform_state: *const ManuallyDrop<PlatformState>,
-        ) -> RocBox<()>;
-
+        SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64
     }
 
-    unsafe {
-        let model = render_caller(model, &ManuallyDrop::new(platform_state));
-
-        debug_assert_eq!(std::mem::size_of_val(&model), render_size());
-
-        model
+    #[cfg(target_family = "wasm")]
+    {
+        // implemented in src/web.js
+        extern "C" {
+            fn date_now() -> f64;
+        }
+        unsafe { date_now() as u64 }
     }
+}
+
+fn get_mouse_button_states() -> RocList<u8> {
+    let mouse_buttons: [u8; 7] = std::array::from_fn(|i| {
+        unsafe {
+            if raylib::IsMouseButtonPressed(i as c_int) {
+                0
+            } else if raylib::IsMouseButtonReleased(i as c_int) {
+                1
+            } else if raylib::IsMouseButtonDown(i as c_int) {
+                2
+            } else {
+                // Up
+                3
+            }
+        }
+    });
+
+    RocList::from_slice(&mouse_buttons)
+}
+
+fn get_keys_states() -> RocList<u8> {
+    let keys: [u8; 350] = std::array::from_fn(|i| {
+        unsafe {
+            if raylib::IsKeyPressed(i as c_int) {
+                0
+            } else if raylib::IsKeyReleased(i as c_int) {
+                1
+            } else if raylib::IsKeyDown(i as c_int) {
+                2
+            } else if raylib::IsKeyUp(i as c_int) {
+                3
+            } else {
+                // PressedRepeat
+                4
+            }
+        }
+    });
+
+    RocList::from_slice(&keys)
 }

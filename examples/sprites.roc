@@ -15,13 +15,13 @@ Model : {
     dudeAnimation : AnimatedSprite,
 }
 
-init! : {} => Result Model []
+init! : {} => Result Model _
 init! = \{} ->
 
     RocRay.setTargetFPS! 60
     RocRay.initWindow! { title: "Animated Sprite Example" }
 
-    dude = Texture.load! "examples/assets/sprite-dude/sheet.png"
+    dude = Texture.load!? "examples/assets/sprite-dude/sheet.png"
 
     Ok {
         player: { x: width / 2, y: height / 2 },
@@ -35,7 +35,7 @@ init! = \{} ->
     }
 
 render! : Model, RocRay.PlatformState => Result Model []
-render! = \model, { timestampMillis, keys } ->
+render! = \model, { timestamp, keys } ->
 
     (player, direction) =
         if Keys.down keys KeyUp then
@@ -49,7 +49,7 @@ render! = \model, { timestampMillis, keys } ->
         else
             (model.player, model.direction)
 
-    dudeAnimation = updateAnimation model.dudeAnimation timestampMillis
+    dudeAnimation = updateAnimation model.dudeAnimation timestamp.renderStart
 
     Draw.draw! White \{} ->
 
