@@ -152,7 +152,7 @@ generateRocModule = \{ atlas, imagePath, xmlPath } ->
         "$(imagePath)"
 
     ## load the sprite sheet as a raylib texture
-    load! : {} => Texture
+    load! : {} => Result Texture _
     load! = \\{} ->
         Texture.load! imagePath
 

@@ -28,7 +28,7 @@ Model : {
 
 tileSize = 64
 
-init! : {} => Result Model []
+init! : {} => Result Model _
 init! = \{} ->
     windowWidth = 12 * tileSize
     windowHeight = 10 * tileSize
@@ -42,8 +42,9 @@ init! = \{} ->
     RocRay.setTargetFPS! 60
     RocRay.displayFPS! { fps: Visible, pos: { x: 100, y: 100 } }
 
-    spriteSheet = Sprites.load! {}
-    level = loadLevel! {}
+    spriteSheet = try Sprites.load! {}
+
+    level = try loadLevel! {}
 
     model = newGame { spriteSheet, level, windowWidth, windowHeight }
 
@@ -114,7 +115,7 @@ drawLevel! = \{ spriteSheet, level } ->
 
 update! : Model, PlatformState => Model
 update! = \model, state ->
-    timestampMillis = state.timestampMillis
+    timestampMillis = state.timestamp.renderStart
     deltaMillis =
         when model.timestampMillis is
             FirstFrame -> 0
@@ -198,7 +199,7 @@ idlingLoop = [
 
 ### LEVEL
 
-loadLevel! : {} => Level
+loadLevel! : {} => Result Level _
 loadLevel! = \{} ->
     toTile : U8 -> Tile
     toTile = \ch ->
@@ -210,13 +211,14 @@ loadLevel! = \{} ->
             '3' -> Green3
             c -> crash "unrecognized character: $(Inspect.toStr c)"
 
-    text = RocRay.loadFileToStr! "examples/assets/platformer/level.txt"
-    lines = Str.split text "\n"
+    text = try RocRay.loadFileToStr! "examples/assets/platformer/level.txt"
+
+    lines = Str.splitOn text "\n"
     rows = List.map lines \line ->
         bytes = Str.toUtf8 line
         List.map bytes toTile
 
-    rows
+    Ok rows
 
 Level : List (List Tile)
 
